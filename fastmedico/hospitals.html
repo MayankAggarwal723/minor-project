@@ -1,0 +1,1514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospitals</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2563eb',
+                        'primary-dark': '#1d4ed8',
+                        secondary: '#10b981',
+                        accent: '#8b5cf6',
+                    },
+                    animation: {
+                        'slide-in': 'slideIn 0.6s ease-out',
+                        'fade-in': 'fadeIn 0.8s ease-out',
+                        'scale-in': 'scaleIn 0.5s ease-out',
+                        'pulse-gentle': 'pulseGentle 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        slideIn: {
+                            '0%': { opacity: '0', transform: 'translateX(-20px)' },
+                            '100%': { opacity: '1', transform: 'translateX(0)' }
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' }
+                        },
+                        scaleIn: {
+                            '0%': { opacity: '0', transform: 'scale(0.9)' },
+                            '100%': { opacity: '1', transform: 'scale(1)' }
+                        },
+                        pulseGentle: {
+                            '0%, 100%': { opacity: '1' },
+                            '50%': { opacity: '0.8' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+        }
+        
+        .sidebar {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        }
+        
+        .nav-item {
+            transition: all 0.3s ease;
+        }
+        
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+        
+        .nav-item.active {
+            background: rgba(37, 99, 235, 0.2);
+            border-left: 4px solid #2563eb;
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .sos-pulse {
+            animation: sosPulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes sosPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .hospital-tab {
+            transition: all 0.3s ease;
+        }
+        
+        .hospital-tab.active {
+            background: #2563eb;
+            color: white;
+        }
+        
+        .availability-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+        
+        .availability-high { background: #10b981; }
+        .availability-medium { background: #f59e0b; }
+        .availability-low { background: #ef4444; }
+        .availability-critical { 
+            background: #7c2d12; 
+            animation: pulseCritical 2s infinite;
+        }
+        
+        @keyframes pulseCritical {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .bed-availability-bar {
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            background: #e5e7eb;
+        }
+        
+        .bed-availability-fill {
+            height: 100%;
+            transition: width 0.5s ease;
+        }
+        
+        .hospital-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .hospital-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .hospital-card.selected {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+        }
+        
+        .map-container {
+            height: 300px;
+            border-radius: 1rem;
+            background: #e5e7eb;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .specialty-tag {
+            transition: all 0.3s ease;
+        }
+        
+        .specialty-tag:hover {
+            transform: scale(1.05);
+        }
+        
+        .filter-option {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .filter-option:hover {
+            background: #dbeafe;
+        }
+        
+        .filter-option.selected {
+            background: #2563eb;
+            color: white;
+        }
+        
+        .location-loading {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .govt-tag {
+            background: #dcfce7;
+            color: #166534;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        
+        .private-tag {
+            background: #dbeafe;
+            color: #1e40af;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .emergency-btn-fixed {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #dc2626, #ef4444);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            animation: emergencyPulse 2s infinite;
+        }
+
+        .emergency-btn-fixed:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 35px rgba(220, 38, 38, 0.6);
+        }
+
+        .emergency-btn-fixed i {
+            font-size: 20px;
+            margin-bottom: 2px;
+        }
+
+        .emergency-btn-fixed.alerting {
+            animation: emergencyAlert 0.5s infinite alternate;
+            background: linear-gradient(135deg, #991b1b, #dc2626);
+        }
+
+        @keyframes emergencyPulse {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
+            }
+            50% { 
+                transform: scale(1.05);
+                box-shadow: 0 8px 30px rgba(220, 38, 38, 0.6);
+            }
+        }
+
+        @keyframes emergencyAlert {
+            0% { 
+                background: linear-gradient(135deg, #dc2626, #ef4444);
+                transform: scale(1);
+            }
+            100% { 
+                background: linear-gradient(135deg, #991b1b, #dc2626);
+                transform: scale(1.1);
+            }
+        }
+
+        /* Emergency Modal */
+        .emergency-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1001;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .emergency-modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Update notification */
+        .update-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1002;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transform: translateX(150%);
+            transition: transform 0.3s ease;
+        }
+        
+        .update-notification.show {
+            transform: translateX(0);
+        }
+        
+        .db-manager-link {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            background: #2563eb;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 50px;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .db-manager-link:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex">
+    <!-- Update Notification -->
+    <div class="update-notification" id="updateNotification">
+        <i class="fas fa-sync-alt"></i>
+        <span>Bed availability updated in real-time!</span>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar w-64 min-h-screen text-white p-6 flex flex-col">
+         <!-- Logo -->
+        <div class="flex items-center space-x-3 mb-8 animate-slide-in">
+            <i class="fas fa-heartbeat text-2xl text-primary"></i>
+            <h1 class="text-xl font-bold">Fast<span class="text-primary">Medico</span></h1>
+        </div>
+
+        <!-- User Profile -->
+        <div class="flex items-center space-x-3 mb-8 p-4 bg-white/10 rounded-xl animate-scale-in">
+            <div id="sidebarInitials" class="w-12 h-12 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center">
+                <span class="text-white font-semibold">JS</span>
+                </div>
+                <div>
+                <h3 id="sidebarName" class="font-semibold">John Smith</h3>
+                <p id="sidebarPatientId" class="text-sm text-gray-300">Patient ID: PM123456</p>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="space-y-2 flex-1">
+            <a href="Dashboard.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-home w-5"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="My Profile.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-user-circle w-5"></i>
+                <span>My Profile</span>
+            </a>
+            <a href="hospitals.html" class="nav-item active flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-hospital w-5"></i>
+                <span>Hospitals</span>
+            </a>
+            <a href="Appointments.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-calendar-check w-5"></i>
+                <span>Appointments</span>
+            </a>
+            <a href="Prescriptions.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-prescription w-5"></i>
+                <span>Prescriptions</span>
+            </a>
+            <a href="Medical Records.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-file-medical w-5"></i>
+                <span>Medical Records</span>
+            </a>
+            <a href="Ambulance Services.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-ambulance w-5"></i>
+                <span>Ambulance</span>
+            </a>
+            <a href="Medicines.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-pills w-5"></i>
+                <span>Medicines</span>
+            </a>
+            <a href="Doctors.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-user-md w-5"></i>
+                <span>Doctors</span>
+            </a>
+            <a href="Blood Bank.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-tint w-5"></i>
+                <span>Blood Bank</span>
+            </a>
+            <a href="video consult.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-video w-5"></i>
+                <span>Video Consult</span>
+            </a>
+            <a href="Ai Diagnosis.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-robot w-5"></i>
+                <span>AI Diagnosis</span>
+            </a>
+        </nav>
+
+        <!-- Emergency SOS Button -->
+        <div class="mt-auto">
+            <button id="sidebarEmergencyBtn" class="w-full bg-red-500 hover:bg-red-600 text-white py-4 rounded-xl font-bold transition-all duration-300 sos-pulse">
+                EMERGENCY SOS
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 p-8 overflow-auto">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">Indian Hospitals & Bed Availability</h1>
+                <p class="text-gray-600">Find hospitals with available beds near you - <span class="text-green-600 font-medium" id="realTimeStatus">Live Updates Active</span></p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <!-- Location Status -->
+                <div class="flex items-center space-x-2 bg-blue-50 px-3 py-2 rounded-lg">
+                    <i class="fas fa-map-marker-alt text-blue-600"></i>
+                    <span class="text-blue-700 font-semibold text-sm" id="locationText">Detecting your location...</span>
+                    <i class="fas fa-sync-alt text-blue-600 location-loading" id="locationLoading"></i>
+                </div>
+                
+                <!-- User Avatar -->
+                <div id="headerAvatar" class="w-10 h-10 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center text-white font-semibold cursor-pointer hover:scale-110 transition-transform">
+                     JS
+                </div>
+            </div>
+        </div>
+
+        <!-- Emergency Alert Banner -->
+        <div class="bg-red-50 border border-red-200 rounded-2xl p-4 mb-8 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-exclamation-triangle text-red-600"></i>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-red-800">COVID-19 Bed Shortage Alert</h3>
+                    <p class="text-red-600 text-sm">Some hospitals are experiencing critical bed shortages. Check availability before visiting.</p>
+                </div>
+            </div>
+            <button class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors">
+                View Critical List
+            </button>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 card-hover">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Hospitals Nearby</p>
+                        <h3 class="text-2xl font-bold text-gray-800 mt-2" id="nearbyHospitalsCount">-</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-hospital text-blue-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 card-hover">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Available Beds</p>
+                        <h3 class="text-2xl font-bold text-gray-800 mt-2" id="availableBedsCount">-</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-bed text-green-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 card-hover">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">ICU Beds Available</p>
+                        <h3 class="text-2xl font-bold text-gray-800 mt-2" id="icuBedsCount">-</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-procedures text-purple-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 card-hover">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Oxygen Beds Available</p>
+                        <h3 class="text-2xl font-bold text-gray-800 mt-2" id="oxygenBedsCount">-</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-lungs text-orange-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hospitals Tabs -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 mb-8">
+            <div class="flex border-b border-gray-200 overflow-x-auto">
+                <button class="hospital-tab active flex-1 py-4 px-6 text-center font-semibold rounded-tl-2xl" data-tab="nearby">
+                    <i class="fas fa-map-marker-alt mr-2"></i>Nearby Hospitals
+                </button>
+                <button class="hospital-tab flex-1 py-4 px-6 text-center font-semibold" data-tab="availability">
+                    <i class="fas fa-bed mr-2"></i>Bed Availability
+                </button>
+                <button class="hospital-tab flex-1 py-4 px-6 text-center font-semibold rounded-tr-2xl" data-tab="specialties">
+                    <i class="fas fa-stethoscope mr-2"></i>Specialties
+                </button>
+            </div>
+            
+            <!-- Tab Content -->
+            <div class="p-6">
+                <!-- Nearby Hospitals Tab -->
+                <div id="nearby-tab" class="tab-content active">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">Hospitals Near You</h2>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-500" id="distanceText">Within 10 km of your location</span>
+                            <button class="text-blue-500 hover:text-blue-600" id="refreshLocation">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <!-- Hospitals List -->
+                        <div class="lg:col-span-1">
+                            <div class="bg-white border border-gray-200 rounded-2xl p-6">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h3 class="font-bold text-gray-800">Hospitals List</h3>
+                                    <div class="relative">
+                                        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                                        <input type="text" id="hospitalSearch" placeholder="Search hospitals..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-48">
+                                    </div>
+                                </div>
+                                
+                                <!-- Filters -->
+                                <div class="flex flex-wrap gap-2 mb-4">
+                                    <div class="filter-option bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium selected" data-filter="all">All</div>
+                                    <div class="filter-option bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-medium" data-filter="government">Government</div>
+                                    <div class="filter-option bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-medium" data-filter="private">Private</div>
+                                    <div class="filter-option bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-medium" data-filter="24/7">24/7 ER</div>
+                                </div>
+                                
+                                <div class="space-y-4 max-h-96 overflow-y-auto pr-2" id="hospitalsList">
+                                    <!-- Hospitals will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Map & Hospital Details -->
+                        <div class="lg:col-span-2">
+                            <div class="grid grid-cols-1 gap-8">
+                                <!-- Map -->
+                                <div class="map-container">
+                                    <div id="map" class="w-full h-full flex items-center justify-center text-gray-500">
+                                        <div class="text-center">
+                                            <i class="fas fa-map-marked-alt text-4xl mb-2"></i>
+                                            <p class="text-lg font-semibold">Hospital Locations</p>
+                                            <p class="text-gray-600">Loading hospitals near you...</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Hospital Details -->
+                                <div class="bg-white border border-gray-200 rounded-2xl p-6" id="hospitalDetails">
+                                    <div class="text-center py-8">
+                                        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <i class="fas fa-hospital text-blue-600 text-2xl"></i>
+                                        </div>
+                                        <p class="text-gray-600">Select a hospital to view details</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Bed Availability Tab -->
+                <div id="availability-tab" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">Real-time Bed Availability</h2>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-500">Last updated: <span id="lastUpdated">Just now</span></span>
+                            <button class="text-blue-500 hover:text-blue-600" id="refreshAvailability">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="availabilityCards">
+                        <!-- Availability cards will be loaded here -->
+                    </div>
+                </div>
+                
+                <!-- Specialties Tab -->
+                <div id="specialties-tab" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">Hospital Specialties</h2>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-500">Find hospitals by medical specialty</span>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8" id="specialtyFilters">
+                        <!-- Specialty filters will be loaded here -->
+                    </div>
+                    
+                    <div class="bg-white border border-gray-200 rounded-2xl p-6" id="specialtyHospitals">
+                        <h3 class="font-bold text-gray-800 mb-4" id="specialtyTitle">Select a specialty to view hospitals</h3>
+                        <div class="text-center py-8" id="specialtyPlaceholder">
+                            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-stethoscope text-blue-600 text-2xl"></i>
+                            </div>
+                            <p class="text-gray-600">Choose a medical specialty to find specialized hospitals</p>
+                        </div>
+                        <div id="specialtyResults" class="hidden">
+                            <!-- Specialty results will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="emergency-btn-fixed" id="globalEmergencyBtn" title="Emergency SOS">
+        <i class="fas fa-phone-alt"></i>
+        <span>SOS</span>
+    </button>
+
+    <!-- Emergency Modal -->
+    <div class="emergency-modal" id="emergencyModal">
+        <div class="emergency-modal-content">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Emergency SOS</h3>
+            <p class="text-gray-600 mb-6">Are you sure you want to trigger emergency alert? This will notify emergency services and your contacts.</p>
+            
+            <div class="flex space-x-3">
+                <button class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-3 rounded-lg font-semibold transition-colors" id="cancelEmergency">
+                    Cancel
+                </button>
+                <button class="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg font-semibold transition-colors" id="confirmEmergency">
+                    Confirm SOS
+                </button>
+            </div>
+        </div>
+    </div>
+    <script src="sidebar.js"></script>
+    <script>
+        // Hospital Database Integration - Shared with hospital-database.html
+        const hospitalDatabase = {
+            // Get data from localStorage or use default data
+            getHospitals: function() {
+                const storedData = localStorage.getItem('hospitalDatabase');
+                if (storedData) {
+                    return JSON.parse(storedData);
+                }
+                
+                // Default data - same as in hospital-database.html
+                return [
+                    {
+                        id: 1,
+                        name: "AIIMS Delhi",
+                        type: "government",
+                        address: "Ansari Nagar, New Delhi, Delhi 110029",
+                        phone: "011-26588500",
+                        website: "www.aiims.edu",
+                        distance: 2.1,
+                        rating: 4.8,
+                        emergency: true,
+                        specialties: ["Cardiology", "Neurology", "Oncology", "Trauma", "Orthopedics"],
+                        availability: {
+                            general: { available: 42, total: 60 },
+                            icu: { available: 8, total: 12 },
+                            emergency: { available: 5, total: 8 },
+                            oxygen: { available: 15, total: 20 }
+                        },
+                        coordinates: { lat: 28.567, lng: 77.211 }
+                    },
+                    {
+                        id: 2,
+                        name: "Apollo Hospital",
+                        type: "private",
+                        address: "Sarita Vihar, Delhi Mathura Road, New Delhi 110076",
+                        phone: "011-26925858",
+                        website: "www.apollohospitals.com",
+                        distance: 3.5,
+                        rating: 4.6,
+                        emergency: true,
+                        specialties: ["Cardiology", "Neurology", "Oncology", "Transplant"],
+                        availability: {
+                            general: { available: 28, total: 40 },
+                            icu: { available: 4, total: 8 },
+                            emergency: { available: 2, total: 6 },
+                            oxygen: { available: 8, total: 15 }
+                        },
+                        coordinates: { lat: 28.532, lng: 77.292 }
+                    },
+                    {
+                        id: 3,
+                        name: "Max Super Specialty Hospital",
+                        type: "private",
+                        address: "Press Enclave Road, Saket, New Delhi 110017",
+                        phone: "011-26515050",
+                        website: "www.maxhealthcare.in",
+                        distance: 5.2,
+                        rating: 4.7,
+                        emergency: true,
+                        specialties: ["Cardiology", "Oncology", "Orthopedics", "Neurology"],
+                        availability: {
+                            general: { available: 35, total: 50 },
+                            icu: { available: 6, total: 10 },
+                            emergency: { available: 4, total: 8 },
+                            oxygen: { available: 12, total: 18 }
+                        },
+                        coordinates: { lat: 28.527, lng: 77.218 }
+                    },
+                    {
+                        id: 4,
+                        name: "Safdarjung Hospital",
+                        type: "government",
+                        address: "Ansari Nagar West, New Delhi 110029",
+                        phone: "011-26165060",
+                        website: "www.safdarjunghospital.nic.in",
+                        distance: 4.7,
+                        rating: 4.3,
+                        emergency: true,
+                        specialties: ["Trauma", "Emergency", "General Medicine", "Surgery"],
+                        availability: {
+                            general: { available: 5, total: 35 },
+                            icu: { available: 1, total: 6 },
+                            emergency: { available: 0, total: 4 },
+                            oxygen: { available: 2, total: 10 }
+                        },
+                        coordinates: { lat: 28.568, lng: 77.208 }
+                    }
+                ];
+            },
+            
+            // Save data to localStorage
+            saveHospitals: function(hospitals) {
+                localStorage.setItem('hospitalDatabase', JSON.stringify(hospitals));
+                // Trigger storage event for cross-tab communication
+                window.dispatchEvent(new StorageEvent('storage', {
+                    key: 'hospitalDatabase',
+                    newValue: JSON.stringify(hospitals)
+                }));
+            },
+            
+            // Subscribe to changes
+            subscribe: function(callback) {
+                if (!this.subscribers) {
+                    this.subscribers = [];
+                }
+                this.subscribers.push(callback);
+                
+                // Set up storage event listener for cross-tab communication
+                window.addEventListener('storage', (e) => {
+                    if (e.key === 'hospitalDatabase') {
+                        callback();
+                    }
+                });
+                
+                // Also listen for custom events from hospital-database.html
+                window.addEventListener('hospitalDataChanged', callback);
+            },
+            
+            // Notify subscribers of changes
+            notifySubscribers: function() {
+                if (this.subscribers) {
+                    this.subscribers.forEach(callback => callback());
+                }
+                // Also dispatch custom event for same-tab communication
+                window.dispatchEvent(new CustomEvent('hospitalDataChanged'));
+            },
+            
+            // Update bed availability
+            updateBedAvailability: function(hospitalId, bedType, newAvailable) {
+                const hospitals = this.getHospitals();
+                const hospital = hospitals.find(h => h.id === hospitalId);
+                
+                if (hospital && hospital.availability[bedType]) {
+                    // Ensure we don't exceed total beds
+                    newAvailable = Math.max(0, Math.min(newAvailable, hospital.availability[bedType].total));
+                    hospital.availability[bedType].available = newAvailable;
+                    
+                    // Save and notify
+                    this.saveHospitals(hospitals);
+                    this.notifySubscribers();
+                    
+                    return true;
+                }
+                return false;
+            },
+            
+            // Increase bed count
+            increaseBeds: function(hospitalId, bedType, amount = 1) {
+                const hospital = this.getHospitals().find(h => h.id === hospitalId);
+                if (hospital && hospital.availability[bedType]) {
+                    const newAvailable = Math.min(
+                        hospital.availability[bedType].available + amount,
+                        hospital.availability[bedType].total
+                    );
+                    return this.updateBedAvailability(hospitalId, bedType, newAvailable);
+                }
+                return false;
+            },
+            
+            // Decrease bed count
+            decreaseBeds: function(hospitalId, bedType, amount = 1) {
+                const hospital = this.getHospitals().find(h => h.id === hospitalId);
+                if (hospital && hospital.availability[bedType]) {
+                    const newAvailable = Math.max(
+                        0,
+                        hospital.availability[bedType].available - amount
+                    );
+                    return this.updateBedAvailability(hospitalId, bedType, newAvailable);
+                }
+                return false;
+            }
+        };
+
+        // Medical Specialties
+        const medicalSpecialties = [
+            { id: "cardiology", name: "Cardiology", icon: "fa-heartbeat", color: "blue" },
+            { id: "neurology", name: "Neurology", icon: "fa-brain", color: "green" },
+            { id: "oncology", name: "Oncology", icon: "fa-dna", color: "pink" },
+            { id: "orthopedics", name: "Orthopedics", icon: "fa-bone", color: "red" },
+            { id: "pediatrics", name: "Pediatrics", icon: "fa-baby", color: "purple" },
+            { id: "gastroenterology", name: "Gastroenterology", icon: "fa-stomach", color: "yellow" }
+        ];
+
+        // Current state
+        let userLocation = null;
+        let selectedHospital = null;
+        let indianHospitals = hospitalDatabase.getHospitals();
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+
+        function initializeApp() {
+            // Set up event listeners
+            setupEventListeners();
+            
+            // Get user location
+            getUserLocation();
+            
+            // Load specialty filters
+            loadSpecialtyFilters();
+            
+            // Subscribe to database changes
+            hospitalDatabase.subscribe(() => {
+                // Update local data
+                indianHospitals = hospitalDatabase.getHospitals();
+                
+                // Update UI
+                updateStats();
+                updateHospitalInUI();
+                
+                // Show update notification
+                showUpdateNotification();
+            });
+            
+            // Initial load
+            updateStats();
+            loadHospitalsList();
+            loadAvailabilityData();
+        }
+
+        function setupEventListeners() {
+            // Tab switching
+            document.querySelectorAll('.hospital-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const targetTab = tab.getAttribute('data-tab');
+                    
+                    // Update active tab
+                    document.querySelectorAll('.hospital-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    // Show target tab content
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.remove('active');
+                        content.classList.add('hidden');
+                    });
+                    
+                    document.getElementById(`${targetTab}-tab`).classList.remove('hidden');
+                    document.getElementById(`${targetTab}-tab`).classList.add('active');
+                    
+                    // Refresh data if needed
+                    if (targetTab === 'availability') {
+                        loadAvailabilityData();
+                    }
+                });
+            });
+            
+            // Refresh location
+            document.getElementById('refreshLocation').addEventListener('click', function() {
+                getUserLocation();
+            });
+            
+            // Refresh availability
+            document.getElementById('refreshAvailability').addEventListener('click', function() {
+                loadAvailabilityData();
+            });
+            
+            // Hospital search
+            document.getElementById('hospitalSearch').addEventListener('input', function() {
+                filterHospitals();
+            });
+            
+            // Filter options
+            document.querySelectorAll('.filter-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    document.querySelectorAll('.filter-option').forEach(o => o.classList.remove('selected'));
+                    this.classList.add('selected');
+                    filterHospitals();
+                });
+            });
+            
+            // Emergency button functionality
+            setupEmergencyButton();
+        }
+
+        function setupEmergencyButton() {
+            const emergencyBtn = document.getElementById('globalEmergencyBtn');
+            const emergencyModal = document.getElementById('emergencyModal');
+            const confirmEmergency = document.getElementById('confirmEmergency');
+            const cancelEmergency = document.getElementById('cancelEmergency');
+
+            // Open emergency modal
+            emergencyBtn.addEventListener('click', function() {
+                emergencyModal.style.display = 'flex';
+            });
+
+            // Confirm emergency
+            confirmEmergency.addEventListener('click', function() {
+                triggerEmergencyAlert();
+                emergencyModal.style.display = 'none';
+            });
+
+            // Cancel emergency
+            cancelEmergency.addEventListener('click', function() {
+                emergencyModal.style.display = 'none';
+            });
+
+            // Close modal when clicking outside
+            emergencyModal.addEventListener('click', function(e) {
+                if (e.target === emergencyModal) {
+                    emergencyModal.style.display = 'none';
+                }
+            });
+
+            function triggerEmergencyAlert() {
+                const btn = emergencyBtn;
+                const originalHTML = btn.innerHTML;
+                
+                // Visual feedback
+                btn.classList.add('alerting');
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>ALERTING...</span>';
+                
+                // Simulate emergency process
+                setTimeout(() => {
+                    showEmergencyNotification('Emergency services alerted! Help is on the way.');
+                    
+                    // Reset button after 5 seconds
+                    setTimeout(() => {
+                        btn.classList.remove('alerting');
+                        btn.innerHTML = originalHTML;
+                    }, 5000);
+                    
+                }, 3000);
+            }
+
+            function showEmergencyNotification(message) {
+                // Create notification
+                const notification = document.createElement('div');
+                notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-4 rounded-lg shadow-lg z-1002 animate-pulse';
+                notification.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-ambulance text-xl"></i>
+                        <div>
+                            <h4 class="font-bold">EMERGENCY ALERT</h4>
+                            <p class="text-sm">${message}</p>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(notification);
+                
+                // Remove notification after 5 seconds
+                setTimeout(() => {
+                    notification.remove();
+                }, 5000);
+            }
+        }
+
+        function getUserLocation() {
+            document.getElementById('locationLoading').classList.remove('hidden');
+            document.getElementById('locationText').textContent = 'Detecting your location...';
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        userLocation = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+                        
+                        // For demo purposes, we'll assume user is in Delhi
+                        document.getElementById('locationText').textContent = 'Delhi, India';
+                        document.getElementById('locationLoading').classList.add('hidden');
+                        
+                        // Update map
+                        updateMap();
+                    },
+                    error => {
+                        console.error('Error getting location:', error);
+                        document.getElementById('locationText').textContent = 'Delhi, India (Approximate)';
+                        document.getElementById('locationLoading').classList.add('hidden');
+                        
+                        // Load hospitals data with default location
+                        userLocation = { lat: 28.6139, lng: 77.2090 }; // Delhi coordinates
+                        updateMap();
+                    }
+                );
+            } else {
+                alert('Geolocation is not supported by this browser.');
+                document.getElementById('locationText').textContent = 'Delhi, India (Default)';
+                document.getElementById('locationLoading').classList.add('hidden');
+                
+                // Load hospitals data with default location
+                userLocation = { lat: 28.6139, lng: 77.2090 }; // Delhi coordinates
+                updateMap();
+            }
+        }
+
+        function updateStats() {
+            let totalHospitals = indianHospitals.length;
+            let totalBeds = 0;
+            let totalICUBeds = 0;
+            let totalOxygenBeds = 0;
+            
+            indianHospitals.forEach(hospital => {
+                totalBeds += hospital.availability.general.available;
+                totalICUBeds += hospital.availability.icu.available;
+                totalOxygenBeds += hospital.availability.oxygen.available;
+            });
+            
+            document.getElementById('nearbyHospitalsCount').textContent = totalHospitals;
+            document.getElementById('availableBedsCount').textContent = totalBeds;
+            document.getElementById('icuBedsCount').textContent = totalICUBeds;
+            document.getElementById('oxygenBedsCount').textContent = totalOxygenBeds;
+            
+            // Update last updated time
+            const now = new Date();
+            document.getElementById('lastUpdated').textContent = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+        }
+
+        function loadHospitalsList() {
+            const hospitalsList = document.getElementById('hospitalsList');
+            hospitalsList.innerHTML = '';
+            
+            indianHospitals.forEach(hospital => {
+                const availability = calculateAvailability(hospital);
+                
+                const hospitalElement = document.createElement('div');
+                hospitalElement.className = `hospital-card bg-white border border-gray-200 rounded-xl p-4 cursor-pointer ${selectedHospital && selectedHospital.id === hospital.id ? 'selected' : ''}`;
+                hospitalElement.setAttribute('data-hospital', hospital.id);
+                
+                hospitalElement.innerHTML = `
+                    <div class="flex items-start justify-between mb-2">
+                        <h4 class="font-semibold text-gray-800">${hospital.name}</h4>
+                        <div class="flex items-center">
+                            <span class="availability-indicator ${availability.class}"></span>
+                            <span class="text-xs ${availability.textClass}">${availability.text}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center text-gray-600 text-sm mb-2">
+                        <i class="fas fa-map-marker-alt text-red-500 mr-2 w-4"></i>
+                        <span>${hospital.distance} km away</span>
+                        <span class="${hospital.type === 'government' ? 'govt-tag' : 'private-tag'} ml-2">${hospital.type === 'government' ? 'Govt' : 'Private'}</span>
+                    </div>
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-gray-600">${hospital.emergency ? '24/7 Emergency' : 'Limited Hours'}</span>
+                        <span class="flex items-center text-green-600 text-sm font-semibold">
+                            <i class="fas fa-star text-yellow-400 mr-1"></i>
+                            ${hospital.rating}
+                        </span>
+                    </div>
+                `;
+                
+                hospitalElement.addEventListener('click', () => {
+                    selectHospital(hospital);
+                });
+                
+                hospitalsList.appendChild(hospitalElement);
+            });
+            
+            // Select first hospital by default
+            if (indianHospitals.length > 0 && !selectedHospital) {
+                selectHospital(indianHospitals[0]);
+            }
+        }
+
+        function filterHospitals() {
+            const searchTerm = document.getElementById('hospitalSearch').value.toLowerCase();
+            const activeFilter = document.querySelector('.filter-option.selected').getAttribute('data-filter');
+            
+            const hospitalsList = document.getElementById('hospitalsList');
+            const hospitalCards = hospitalsList.querySelectorAll('.hospital-card');
+            
+            hospitalCards.forEach(card => {
+                const hospitalId = parseInt(card.getAttribute('data-hospital'));
+                const hospital = indianHospitals.find(h => h.id === hospitalId);
+                
+                let showHospital = true;
+                
+                // Apply search filter
+                if (searchTerm && !hospital.name.toLowerCase().includes(searchTerm)) {
+                    showHospital = false;
+                }
+                
+                // Apply type filter
+                if (activeFilter === 'government' && hospital.type !== 'government') {
+                    showHospital = false;
+                } else if (activeFilter === 'private' && hospital.type !== 'private') {
+                    showHospital = false;
+                } else if (activeFilter === '24/7' && !hospital.emergency) {
+                    showHospital = false;
+                }
+                
+                card.style.display = showHospital ? 'block' : 'none';
+            });
+        }
+
+        function selectHospital(hospital) {
+            selectedHospital = hospital;
+            
+            // Update UI
+            document.querySelectorAll('.hospital-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            document.querySelector(`.hospital-card[data-hospital="${hospital.id}"]`).classList.add('selected');
+            
+            // Show hospital details
+            showHospitalDetails(hospital);
+        }
+
+        function showHospitalDetails(hospital) {
+            const availability = calculateAvailability(hospital);
+            
+            const detailsHTML = `
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-xl">${hospital.name}</h3>
+                        <p class="text-gray-600">${hospital.type === 'government' ? 'Government' : 'Private'} Hospital • ${hospital.emergency ? '24/7 Emergency' : 'Limited Hours'}</p>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="availability-indicator ${availability.class}"></span>
+                        <span class="${availability.textClass} font-semibold">${availability.text} Availability</span>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <h4 class="font-semibold text-gray-800 mb-3">Contact Information</h4>
+                        <div class="space-y-3">
+                            <div class="flex items-center text-gray-600">
+                                <i class="fas fa-map-marker-alt text-red-500 mr-2 w-5"></i>
+                                <span>${hospital.address}</span>
+                            </div>
+                            <div class="flex items-center text-gray-600">
+                                <i class="fas fa-phone text-green-500 mr-2 w-5"></i>
+                                <span>${hospital.phone}</span>
+                            </div>
+                            <div class="flex items-center text-gray-600">
+                                <i class="fas fa-globe text-blue-500 mr-2 w-5"></i>
+                                <span>${hospital.website}</span>
+                            </div>
+                            <div class="flex items-center text-gray-600">
+                                <i class="fas fa-clock text-purple-500 mr-2 w-5"></i>
+                                <span>${hospital.emergency ? '24/7 Emergency Department' : 'Limited Emergency Hours'}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-semibold text-gray-800 mb-3">Bed Availability</h4>
+                        <div class="space-y-3">
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-gray-600">General Beds</span>
+                                    <span class="font-semibold">${hospital.availability.general.available}/${hospital.availability.general.total} (${Math.round(hospital.availability.general.available/hospital.availability.general.total*100)}%)</span>
+                                </div>
+                                <div class="bed-availability-bar">
+                                    <div class="bed-availability-fill bg-green-500" style="width: ${hospital.availability.general.available/hospital.availability.general.total*100}%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-gray-600">ICU Beds</span>
+                                    <span class="font-semibold">${hospital.availability.icu.available}/${hospital.availability.icu.total} (${Math.round(hospital.availability.icu.available/hospital.availability.icu.total*100)}%)</span>
+                                </div>
+                                <div class="bed-availability-bar">
+                                    <div class="bed-availability-fill ${hospital.availability.icu.available/hospital.availability.icu.total > 0.5 ? 'bg-green-500' : hospital.availability.icu.available/hospital.availability.icu.total > 0.2 ? 'bg-yellow-500' : 'bg-red-500'}" style="width: ${hospital.availability.icu.available/hospital.availability.icu.total*100}%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-gray-600">Oxygen Beds</span>
+                                    <span class="font-semibold">${hospital.availability.oxygen.available}/${hospital.availability.oxygen.total} (${Math.round(hospital.availability.oxygen.available/hospital.availability.oxygen.total*100)}%)</span>
+                                </div>
+                                <div class="bed-availability-bar">
+                                    <div class="bed-availability-fill ${hospital.availability.oxygen.available/hospital.availability.oxygen.total > 0.5 ? 'bg-green-500' : hospital.availability.oxygen.available/hospital.availability.oxygen.total > 0.2 ? 'bg-yellow-500' : 'bg-red-500'}" style="width: ${hospital.availability.oxygen.available/hospital.availability.oxygen.total*100}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <h4 class="font-semibold text-gray-800 mb-3">Specialties & Services</h4>
+                    <div class="flex flex-wrap gap-2">
+                        ${hospital.specialties.map(specialty => `<span class="specialty-tag bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">${specialty}</span>`).join('')}
+                    </div>
+                </div>
+                
+                <div class="flex space-x-3">
+                    <button class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold transition-colors" onclick="window.open('https://maps.google.com/?q=${encodeURIComponent(hospital.address)}', '_blank')">
+                        <i class="fas fa-directions mr-2"></i>Get Directions
+                    </button>
+                    <button class="flex-1 bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-semibold transition-colors" onclick="window.location.href='Ambulance Services.html'">
+                        <i class="fas fa-ambulance mr-2"></i>Book Ambulance
+                    </button>
+                    <button class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold transition-colors" onclick="window.open('tel:${hospital.phone}')">
+                        <i class="fas fa-phone mr-2"></i>Call Hospital
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('hospitalDetails').innerHTML = detailsHTML;
+        }
+
+        function calculateAvailability(hospital) {
+            const totalBeds = hospital.availability.general.total + hospital.availability.icu.total + hospital.availability.emergency.total;
+            const availableBeds = hospital.availability.general.available + hospital.availability.icu.available + hospital.availability.emergency.available;
+            const availabilityRatio = availableBeds / totalBeds;
+            
+            if (availabilityRatio >= 0.7) {
+                return { class: 'availability-high', text: 'Good', textClass: 'text-green-600' };
+            } else if (availabilityRatio >= 0.4) {
+                return { class: 'availability-medium', text: 'Moderate', textClass: 'text-yellow-600' };
+            } else if (availabilityRatio >= 0.1) {
+                return { class: 'availability-low', text: 'Limited', textClass: 'text-red-600' };
+            } else {
+                return { class: 'availability-critical', text: 'Critical', textClass: 'text-red-800' };
+            }
+        }
+
+        function updateMap() {
+            const mapElement = document.getElementById('map');
+            
+            // Simple map visualization with hospital markers
+            let mapHTML = `
+                <div class="w-full h-full bg-blue-50 rounded-lg relative">
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="text-center">
+                            <i class="fas fa-map-marked-alt text-4xl mb-2 text-blue-600"></i>
+                            <p class="text-lg font-semibold text-blue-800">Hospital Locations</p>
+                            <p class="text-blue-600">${indianHospitals.length} hospitals near you</p>
+                        </div>
+                    </div>
+            `;
+            
+            // Add hospital markers (simplified)
+            indianHospitals.forEach((hospital, index) => {
+                const top = 20 + (index * 15) % 70;
+                const left = 20 + (index * 20) % 70;
+                const isSelected = selectedHospital && selectedHospital.id === hospital.id;
+                
+                mapHTML += `
+                    <div class="absolute w-${isSelected ? '6' : '4'} h-${isSelected ? '6' : '4'} ${isSelected ? 'bg-blue-500 border-4' : 'bg-red-500 border-2'} border-white rounded-full shadow-lg cursor-pointer" 
+                         style="top: ${top}%; left: ${left}%;"
+                         title="${hospital.name}"
+                         onclick="selectHospital(${JSON.stringify(hospital).replace(/"/g, '&quot;')})">
+                         ${isSelected ? '<div class="w-2 h-2 bg-white rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></div>' : ''}
+                    </div>
+                `;
+            });
+            
+            // Add user location marker
+            if (userLocation) {
+                mapHTML += `
+                    <div class="absolute w-6 h-6 bg-green-500 rounded-full border-2 border-white shadow-lg" 
+                         style="top: 50%; left: 50%; transform: translate(-50%, -50%);"
+                         title="Your Location">
+                        <div class="w-2 h-2 bg-white rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></div>
+                    </div>
+                `;
+            }
+            
+            mapHTML += `</div>`;
+            mapElement.innerHTML = mapHTML;
+        }
+
+        function loadAvailabilityData() {
+            const availabilityCards = document.getElementById('availabilityCards');
+            availabilityCards.innerHTML = '';
+            
+            indianHospitals.forEach(hospital => {
+                const availability = calculateAvailability(hospital);
+                
+                const cardHTML = `
+                    <div class="bg-white border border-gray-200 rounded-2xl p-6 card-hover">
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="font-bold text-gray-800">${hospital.name}</h3>
+                            <div class="flex items-center">
+                                <span class="availability-indicator ${availability.class}"></span>
+                                <span class="${availability.textClass} text-sm font-semibold">${availability.text}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-3 mb-4">
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-gray-600">General Beds</span>
+                                    <span class="font-semibold">${hospital.availability.general.available}/${hospital.availability.general.total}</span>
+                                </div>
+                                <div class="bed-availability-bar">
+                                    <div class="bed-availability-fill bg-green-500" style="width: ${hospital.availability.general.available/hospital.availability.general.total*100}%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-gray-600">ICU Beds</span>
+                                    <span class="font-semibold">${hospital.availability.icu.available}/${hospital.availability.icu.total}</span>
+                                </div>
+                                <div class="bed-availability-bar">
+                                    <div class="bed-availability-fill ${hospital.availability.icu.available/hospital.availability.icu.total > 0.5 ? 'bg-green-500' : hospital.availability.icu.available/hospital.availability.icu.total > 0.2 ? 'bg-yellow-500' : 'bg-red-500'}" style="width: ${hospital.availability.icu.available/hospital.availability.icu.total*100}%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-gray-600">Oxygen Beds</span>
+                                    <span class="font-semibold">${hospital.availability.oxygen.available}/${hospital.availability.oxygen.total}</span>
+                                </div>
+                                <div class="bed-availability-bar">
+                                    <div class="bed-availability-fill ${hospital.availability.oxygen.available/hospital.availability.oxygen.total > 0.5 ? 'bg-green-500' : hospital.availability.oxygen.available/hospital.availability.oxygen.total > 0.2 ? 'bg-yellow-500' : 'bg-red-500'}" style="width: ${hospital.availability.oxygen.available/hospital.availability.oxygen.total*100}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center text-gray-600 text-sm mb-4">
+                            <i class="fas fa-map-marker-alt text-red-500 mr-2 w-4"></i>
+                            <span>${hospital.distance} km away</span>
+                        </div>
+                        
+                        <button class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg font-medium transition-colors" onclick="selectHospitalFromAvailability(${hospital.id})">
+                            View Details
+                        </button>
+                    </div>
+                `;
+                
+                availabilityCards.innerHTML += cardHTML;
+            });
+        }
+
+        // Global function to select hospital from availability tab
+        window.selectHospitalFromAvailability = function(hospitalId) {
+            const hospital = indianHospitals.find(h => h.id === hospitalId);
+            if (hospital) {
+                // Switch to nearby hospitals tab
+                document.querySelector('.hospital-tab[data-tab="nearby"]').click();
+                
+                // Select the hospital
+                selectHospital(hospital);
+            }
+        };
+
+        function loadSpecialtyFilters() {
+            const specialtyFiltersContainer = document.getElementById('specialtyFilters');
+            specialtyFiltersContainer.innerHTML = '';
+            
+            medicalSpecialties.forEach(specialty => {
+                const filterHTML = `
+                    <div class="specialty-tag bg-${specialty.color}-100 text-${specialty.color}-800 p-4 rounded-xl text-center cursor-pointer card-hover" data-specialty="${specialty.id}">
+                        <i class="fas ${specialty.icon} text-2xl mb-2"></i>
+                        <p class="font-semibold">${specialty.name}</p>
+                    </div>
+                `;
+                
+                specialtyFiltersContainer.innerHTML += filterHTML;
+            });
+            
+            // Add event listeners to specialty filters
+            document.querySelectorAll('.specialty-tag[data-specialty]').forEach(tag => {
+                tag.addEventListener('click', function() {
+                    const specialtyId = this.getAttribute('data-specialty');
+                    filterHospitalsBySpecialty(specialtyId);
+                });
+            });
+        }
+
+        function filterHospitalsBySpecialty(specialtyId) {
+            const specialty = medicalSpecialties.find(s => s.id === specialtyId);
+            const specialtyHospitals = indianHospitals.filter(hospital => 
+                hospital.specialties.some(s => s.toLowerCase().includes(specialtyId))
+            );
+            
+            // Update UI
+            document.getElementById('specialtyTitle').textContent = `Hospitals with ${specialty.name} Specialists`;
+            document.getElementById('specialtyPlaceholder').classList.add('hidden');
+            document.getElementById('specialtyResults').classList.remove('hidden');
+            
+            const specialtyResults = document.getElementById('specialtyResults');
+            specialtyResults.innerHTML = '';
+            
+            if (specialtyHospitals.length === 0) {
+                specialtyResults.innerHTML = `
+                    <div class="text-center py-8">
+                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-hospital text-gray-400 text-2xl"></i>
+                        </div>
+                        <p class="text-gray-600">No hospitals found with ${specialty.name} specialists in this area.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            specialtyHospitals.forEach(hospital => {
+                const availability = calculateAvailability(hospital);
+                
+                const hospitalHTML = `
+                    <div class="flex items-center justify-between p-4 border border-gray-200 rounded-xl mb-4">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 bg-${specialty.color}-100 rounded-xl flex items-center justify-center">
+                                <i class="fas ${specialty.icon} text-${specialty.color}-600"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-800">${hospital.name}</h4>
+                                <p class="text-sm text-gray-600">${hospital.type === 'government' ? 'Government' : 'Private'} hospital • ${hospital.distance} km away</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="availability-indicator ${availability.class}"></span>
+                            <span class="${availability.textClass} text-xs font-semibold">${availability.text}</span>
+                            <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors" onclick="selectHospitalFromAvailability(${hospital.id})">
+                                View Details
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                specialtyResults.innerHTML += hospitalHTML;
+            });
+        }
+
+        function updateHospitalInUI() {
+            if (selectedHospital) {
+                // Refresh the selected hospital details
+                const hospital = indianHospitals.find(h => h.id === selectedHospital.id);
+                if (hospital) {
+                    showHospitalDetails(hospital);
+                }
+            }
+            
+            // Refresh hospitals list
+            loadHospitalsList();
+            
+            // Refresh availability tab if active
+            if (document.getElementById('availability-tab').classList.contains('active')) {
+                loadAvailabilityData();
+            }
+            
+            // Update map
+            updateMap();
+        }
+
+        function showUpdateNotification() {
+            const notification = document.getElementById('updateNotification');
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

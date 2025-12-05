@@ -1,0 +1,1462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FastMedico - AI Diagnosis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2563eb',
+                        'primary-dark': '#1d4ed8',
+                        secondary: '#10b981',
+                        accent: '#8b5cf6',
+                    },
+                    animation: {
+                        'slide-in': 'slideIn 0.6s ease-out',
+                        'fade-in': 'fadeIn 0.8s ease-out',
+                        'scale-in': 'scaleIn 0.5s ease-out',
+                        'pulse-gentle': 'pulseGentle 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        slideIn: {
+                            '0%': { opacity: '0', transform: 'translateX(-20px)' },
+                            '100%': { opacity: '1', transform: 'translateX(0)' }
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' }
+                        },
+                        scaleIn: {
+                            '0%': { opacity: '0', transform: 'scale(0.9)' },
+                            '100%': { opacity: '1', transform: 'scale(1)' }
+                        },
+                        pulseGentle: {
+                            '0%, 100%': { opacity: '1' },
+                            '50%': { opacity: '0.8' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+        }
+        
+        .sidebar {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        }
+        
+        .nav-item {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+        
+        .nav-item.active {
+            background: rgba(37, 99, 235, 0.2);
+            border-left: 4px solid #2563eb;
+        }
+        
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .quick-action {
+            transition: all 0.3s ease;
+        }
+        
+        .quick-action:hover {
+            transform: scale(1.05);
+        }
+        
+        .sos-pulse {
+            animation: sosPulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes sosPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+        }
+        
+        .notification-badge {
+            animation: bounce 2s ease-in-out infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        .ai-tab {
+            transition: all 0.3s ease;
+        }
+        
+        .ai-tab.active {
+            background: #2563eb;
+            color: white;
+        }
+        
+        .symptom-tag {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .symptom-tag:hover {
+            transform: scale(1.05);
+        }
+        
+        .symptom-tag.selected {
+            background: #2563eb;
+            color: white;
+        }
+        
+        .diagnosis-card {
+            transition: all 0.3s ease;
+        }
+        
+        .diagnosis-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .scan-preview {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .ai-thinking {
+            animation: thinking 2s ease-in-out infinite;
+        }
+        
+        @keyframes thinking {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .confidence-bar {
+            transition: all 0.5s ease;
+        }
+        
+        .upload-area {
+            border: 2px dashed #d1d5db;
+            transition: all 0.3s ease;
+        }
+        
+        .upload-area:hover {
+            border-color: #2563eb;
+            background: #f0f7ff;
+        }
+        
+        .upload-area.dragover {
+            border-color: #2563eb;
+            background: #e0f2fe;
+        }
+        
+        .risk-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+        
+        .risk-low {
+            background: #10b981;
+        }
+        
+        .risk-medium {
+            background: #f59e0b;
+        }
+        
+        .risk-high {
+            background: #ef4444;
+        }
+        
+        .pulse-ai {
+            animation: pulseAI 2s infinite;
+        }
+        
+        @keyframes pulseAI {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .emergency-btn-fixed {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #dc2626, #ef4444);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            animation: emergencyPulse 2s infinite;
+        }
+
+        .emergency-btn-fixed:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 35px rgba(220, 38, 38, 0.6);
+        }
+
+        .emergency-btn-fixed i {
+            font-size: 20px;
+            margin-bottom: 2px;
+        }
+
+        .emergency-btn-fixed.alerting {
+            animation: emergencyAlert 0.5s infinite alternate;
+            background: linear-gradient(135deg, #991b1b, #dc2626);
+        }
+
+        @keyframes emergencyPulse {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
+            }
+            50% { 
+                transform: scale(1.05);
+                box-shadow: 0 8px 30px rgba(220, 38, 38, 0.6);
+            }
+        }
+
+        @keyframes emergencyAlert {
+            0% { 
+                background: linear-gradient(135deg, #dc2626, #ef4444);
+                transform: scale(1);
+            }
+            100% { 
+                background: linear-gradient(135deg, #991b1b, #dc2626);
+                transform: scale(1.1);
+            }
+        }
+
+        /* Emergency Modal */
+        .emergency-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1001;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .emergency-modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex">
+    <!-- Sidebar -->
+    <div class="sidebar w-64 min-h-screen text-white p-6 flex flex-col">
+        <!-- Logo -->
+        <div class="flex items-center space-x-3 mb-8 animate-slide-in">
+            <i class="fas fa-heartbeat text-2xl text-primary"></i>
+            <h1 class="text-xl font-bold">Fast<span class="text-primary">Medico</span></h1>
+        </div>
+
+        <!-- User Profile -->
+        <div class="flex items-center space-x-3 mb-8 p-4 bg-white/10 rounded-xl animate-scale-in">
+            <div id="sidebarInitials" class="w-12 h-12 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center">
+                <span class="text-white font-semibold">JS</span>
+                </div>
+                <div>
+                <h3 id="sidebarName" class="font-semibold">John Smith</h3>
+                <p id="sidebarPatientId" class="text-sm text-gray-300">Patient ID: PM123456</p>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="space-y-2 flex-1">
+            <a href="Dashboard.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-home w-5"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="My Profile.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-user-circle w-5"></i>
+                <span>My Profile</span>
+            </a>
+            <a href="hospitals.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-hospital w-5"></i>
+                <span>Hospitals</span>
+            </a>
+            <a href="Appointments.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-calendar-check w-5"></i>
+                <span>Appointments</span>
+            </a>
+            <a href="Prescriptions.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-prescription w-5"></i>
+                <span>Prescriptions</span>
+            </a>
+            <a href="Medical Records.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-file-medical w-5"></i>
+                <span>Medical Records</span>
+            </a>
+            <a href="Ambulance Services.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-ambulance w-5"></i>
+                <span>Ambulance</span>
+            </a>
+            <a href="Medicines.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-pills w-5"></i>
+                <span>Medicines</span>
+            </a>
+            <a href="Doctors.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-user-md w-5"></i>
+                <span>Doctors</span>
+            </a>
+            <a href="Blood Bank.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-tint w-5"></i>
+                <span>Blood Bank</span>
+            </a>
+            <a href="video consult.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-video w-5"></i>
+                <span>Video Consult</span>
+            </a>
+            <a href="Ai Diagnosis.html" class="nav-item active flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-robot w-5"></i>
+                <span>AI Diagnosis</span>
+            </a>
+        </nav>
+
+        <!-- Emergency SOS Button -->
+        <div class="mt-auto">
+            <button id="sidebarEmergencyBtn" class="w-full bg-red-500 hover:bg-red-600 text-white py-4 rounded-xl font-bold transition-all duration-300 sos-pulse">
+                EMERGENCY SOS
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 p-8 overflow-auto">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800 animate-slide-in">AI Diagnosis</h1>
+                <p class="text-gray-600 animate-slide-in" style="animation-delay: 0.1s">AI-powered preliminary medical analysis</p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <!-- AI Status -->
+                <div class="flex items-center space-x-2 bg-green-50 px-3 py-2 rounded-lg">
+                    <div class="flex items-center space-x-1">
+                        <span class="w-2 h-2 bg-green-500 rounded-full pulse-ai"></span>
+                    </div>
+                    <span class="text-green-700 font-semibold text-sm">AI SYSTEM ONLINE</span>
+                </div>
+                
+                <!-- Notifications -->
+                <div class="relative">
+                    <i class="fas fa-bell text-2xl text-gray-600 cursor-pointer hover:text-primary transition-colors"></i>
+                    <span class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full notification-badge"></span>
+                </div>
+                
+                <!-- User Avatar -->
+                <div id="headerAvatar" class="w-10 h-10 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center text-white font-semibold cursor-pointer hover:scale-110 transition-transform">
+                     JS
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 card-hover animate-scale-in">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Accuracy Rate</p>
+                        <h3 class="text-2xl font-bold text-gray-800 mt-2">94.2%</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-bullseye text-green-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 card-hover animate-scale-in" style="animation-delay: 0.1s">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Analyses Today</p>
+                        <h3 class="text-2xl font-bold text-gray-800 mt-2">1,284</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-chart-line text-blue-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 card-hover animate-scale-in" style="animation-delay: 0.2s">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Avg. Processing Time</p>
+                        <h3 class="text-2xl font-bold text-gray-800 mt-2">12.3s</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-clock text-purple-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 card-hover animate-scale-in" style="animation-delay: 0.3s">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Conditions Detected</p>
+                        <h3 class="text-2xl font-bold text-gray-800 mt-2">327</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-diagnoses text-orange-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Diagnosis Tabs -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 mb-8">
+            <div class="flex border-b border-gray-200 overflow-x-auto">
+                <button class="ai-tab active flex-1 py-4 px-6 text-center font-semibold rounded-tl-2xl whitespace-nowrap" data-tab="symptoms">
+                    <i class="fas fa-stethoscope mr-2"></i>Symptom Checker
+                </button>
+                <button class="ai-tab flex-1 py-4 px-6 text-center font-semibold whitespace-nowrap" data-tab="scans">
+                    <i class="fas fa-x-ray mr-2"></i>Scan Analysis
+                </button>
+                <button class="ai-tab flex-1 py-4 px-6 text-center font-semibold whitespace-nowrap" data-tab="history">
+                    <i class="fas fa-history mr-2"></i>Analysis History
+                </button>
+                <button class="ai-tab flex-1 py-4 px-6 text-center font-semibold rounded-tr-2xl whitespace-nowrap" data-tab="info">
+                    <i class="fas fa-info-circle mr-2"></i>About AI Diagnosis
+                </button>
+            </div>
+            
+            <!-- Tab Content -->
+            <div class="p-6">
+                <!-- Symptom Checker Tab -->
+                <div id="symptoms-tab" class="tab-content active">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <!-- Symptom Input -->
+                        <div class="lg:col-span-2">
+                            <div class="bg-white border border-gray-200 rounded-2xl p-6">
+                                <h3 class="font-bold text-gray-800 mb-4">Describe Your Symptoms</h3>
+                                
+                                <div class="mb-6">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">What symptoms are you experiencing?</label>
+                                    <textarea id="symptom-description" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" rows="4" placeholder="Describe your symptoms in detail, including when they started, severity, and any triggers..."></textarea>
+                                </div>
+                                
+                                <div class="mb-6">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Common Symptoms</label>
+                                    <div class="flex flex-wrap gap-2">
+                                        <div class="symptom-tag bg-gray-100 text-gray-800 px-3 py-2 rounded-lg text-sm font-medium" data-symptom="headache">Headache</div>
+                                        <div class="symptom-tag bg-gray-100 text-gray-800 px-3 py-2 rounded-lg text-sm font-medium" data-symptom="fever">Fever</div>
+                                        <div class="symptom-tag bg-gray-100 text-gray-800 px-3 py-2 rounded-lg text-sm font-medium" data-symptom="cough">Cough</div>
+                                        <div class="symptom-tag bg-gray-100 text-gray-800 px-3 py-2 rounded-lg text-sm font-medium" data-symptom="fatigue">Fatigue</div>
+                                        <div class="symptom-tag bg-gray-100 text-gray-800 px-3 py-2 rounded-lg text-sm font-medium" data-symptom="nausea">Nausea</div>
+                                        <div class="symptom-tag bg-gray-100 text-gray-800 px-3 py-2 rounded-lg text-sm font-medium" data-symptom="dizziness">Dizziness</div>
+                                        <div class="symptom-tag bg-gray-100 text-gray-800 px-3 py-2 rounded-lg text-sm font-medium" data-symptom="chest-pain">Chest Pain</div>
+                                        <div class="symptom-tag bg-gray-100 text-gray-800 px-3 py-2 rounded-lg text-sm font-medium" data-symptom="shortness-breath">Shortness of Breath</div>
+                                        <div class="symptom-tag bg-gray-100 text-gray-800 px-3 py-2 rounded-lg text-sm font-medium" data-symptom="sore-throat">Sore Throat</div>
+                                        <div class="symptom-tag bg-gray-100 text-gray-800 px-3 py-2 rounded-lg text-sm font-medium" data-symptom="body-pain">Body Pain</div>
+                                        <div class="symptom-tag bg-gray-100 text-gray-800 px-3 py-2 rounded-lg text-sm font-medium" data-symptom="runny-nose">Runny Nose</div>
+                                        <div class="symptom-tag bg-gray-100 text-gray-800 px-3 py-2 rounded-lg text-sm font-medium" data-symptom="stomach-pain">Stomach Pain</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Symptom Duration</label>
+                                        <select id="symptom-duration" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                            <option value="24h">Less than 24 hours</option>
+                                            <option value="3d">1-3 days</option>
+                                            <option value="7d">3-7 days</option>
+                                            <option value="2w">1-2 weeks</option>
+                                            <option value="2w+">More than 2 weeks</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Severity</label>
+                                        <select id="symptom-severity" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                            <option value="mild">Mild</option>
+                                            <option value="moderate">Moderate</option>
+                                            <option value="severe">Severe</option>
+                                            <option value="very-severe">Very Severe</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <button id="analyze-symptoms-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold transition-colors">
+                                    <i class="fas fa-robot mr-2"></i>
+                                    Analyze Symptoms with AI
+                                </button>
+                                
+                                <div class="mt-4 text-center">
+                                    <p class="text-xs text-gray-500">
+                                        <i class="fas fa-shield-alt mr-1"></i>
+                                        Your data is encrypted and secure. This is not a substitute for professional medical advice.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- AI Analysis Results -->
+                        <div class="lg:col-span-1">
+                            <div class="bg-white border border-gray-200 rounded-2xl p-6">
+                                <h3 class="font-bold text-gray-800 mb-4">AI Analysis Results</h3>
+                                
+                                <div id="initial-results" class="text-center py-8">
+                                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <i class="fas fa-robot text-blue-600 text-2xl"></i>
+                                    </div>
+                                    <p class="text-gray-600">Enter your symptoms to get AI-powered analysis</p>
+                                </div>
+                                
+                                <!-- Results will appear here after analysis -->
+                                <div id="results-container" class="hidden">
+                                    <div class="mb-4">
+                                        <h4 class="font-semibold text-gray-800 mb-2">Possible Health Concern</h4>
+                                        <div class="space-y-3">
+                                            <div class="diagnosis-card bg-white border border-gray-200 rounded-xl p-4">
+                                                <div class="flex justify-between items-start mb-2">
+                                                    <h5 class="font-medium text-gray-800" id="condition-name">Condition Name</h5>
+                                                    <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-semibold" id="condition-match">Match</span>
+                                                </div>
+                                                <p class="text-sm text-gray-600 mt-2" id="condition-description">Condition description will appear here</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-4">
+                                        <h4 class="font-semibold text-gray-800 mb-2">Recommended Precautions</h4>
+                                        <ul class="text-sm text-gray-700 space-y-2" id="precautions-list">
+                                            <!-- Precautions will be dynamically added here -->
+                                        </ul>
+                                    </div>
+                                    
+                                    <div class="mb-4">
+                                        <h4 class="font-semibold text-gray-800 mb-2">Suggested Actions</h4>
+                                        <ul class="text-sm text-gray-700 space-y-2" id="actions-list">
+                                            <!-- Actions will be dynamically added here -->
+                                        </ul>
+                                    </div>
+                                    
+                                    <div class="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
+                                        <h4 class="font-semibold text-yellow-800 mb-2">Important Note</h4>
+                                        <p class="text-sm text-yellow-700">
+                                            <i class="fas fa-exclamation-circle mr-2"></i>
+                                            <span id="medical-note">This analysis is for informational purposes only. If symptoms persist or worsen, please consult with a healthcare professional or visit a nearby medical facility.</span>
+                                        </p>
+                                    </div>
+                                    
+                                    <div class="flex space-x-2 mt-6">
+                                        <button id="consult-doctor-btn" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg font-medium transition-colors">
+                                            <i class="fas fa-user-md mr-2"></i>Find Healthcare Provider
+                                        </button>
+                                        <button id="save-report-btn" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-lg font-medium transition-colors">
+                                            <i class="fas fa-download mr-2"></i>Save Report
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Scan Analysis Tab -->
+                <div id="scans-tab" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">Medical Scan Analysis</h2>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-500">AI-powered image recognition</span>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- Upload Area -->
+                        <div class="lg:col-span-1">
+                            <div class="bg-white border border-gray-200 rounded-2xl p-6">
+                                <h3 class="font-bold text-gray-800 mb-4">Upload Medical Scans</h3>
+                                
+                                <div class="upload-area border-2 border-dashed rounded-2xl p-8 text-center mb-6">
+                                    <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                                    <h4 class="font-semibold text-gray-700 mb-2">Upload Medical Images</h4>
+                                    <p class="text-gray-500 text-sm mb-4">Supported formats: JPG, PNG, DICOM</p>
+                                    <button id="select-files-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                                        <i class="fas fa-folder-open mr-2"></i>Select Files
+                                    </button>
+                                    <input type="file" class="hidden" id="file-upload" accept=".jpg,.jpeg,.png,.dicom">
+                                </div>
+                                
+                                <div class="mb-6">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Scan Type</label>
+                                    <select id="scan-type" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="xray">X-Ray</option>
+                                        <option value="ct">CT Scan</option>
+                                        <option value="mri">MRI</option>
+                                        <option value="ultrasound">Ultrasound</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-6">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Body Area</label>
+                                    <select id="body-area" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="chest">Chest</option>
+                                        <option value="head">Head/Brain</option>
+                                        <option value="abdomen">Abdomen</option>
+                                        <option value="extremities">Extremities</option>
+                                        <option value="spine">Spine</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                                
+                                <button id="analyze-scan-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold transition-colors">
+                                    <i class="fas fa-search mr-2"></i>
+                                    Analyze Scan with AI
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Scan Preview & Results -->
+                        <div class="lg:col-span-1">
+                            <div class="bg-white border border-gray-200 rounded-2xl p-6">
+                                <h3 class="font-bold text-gray-800 mb-4">Scan Analysis Results</h3>
+                                
+                                <div id="scan-preview" class="scan-preview h-64 rounded-xl mb-6 flex items-center justify-center">
+                                    <div class="text-white text-center">
+                                        <i class="fas fa-x-ray text-4xl mb-2"></i>
+                                        <p class="text-lg font-semibold">Scan Preview</p>
+                                        <p class="text-white/80">Upload an image to see preview</p>
+                                    </div>
+                                </div>
+                                
+                                <div id="scan-results" class="space-y-4 hidden">
+                                    <div>
+                                        <h4 class="font-semibold text-gray-800 mb-2">AI Findings</h4>
+                                        <div class="bg-blue-50 p-4 rounded-xl">
+                                            <p class="text-sm text-blue-800" id="scan-findings">Findings will appear here</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <h4 class="font-semibold text-gray-800 mb-2">Confidence Level</h4>
+                                        <div class="flex items-center space-x-2">
+                                            <div class="w-full bg-gray-200 rounded-full h-3">
+                                                <div id="confidence-bar" class="bg-green-500 h-3 rounded-full" style="width: 0%"></div>
+                                            </div>
+                                            <span id="confidence-percentage" class="text-sm font-semibold text-gray-700">0%</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <h4 class="font-semibold text-gray-800 mb-2">Recommendations</h4>
+                                        <ul id="scan-recommendations" class="text-sm text-gray-700 space-y-2">
+                                            <!-- Recommendations will be added here -->
+                                        </ul>
+                                    </div>
+                                </div>
+                                
+                                <div id="scan-actions" class="flex space-x-2 mt-6 hidden">
+                                    <button class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg font-medium transition-colors">
+                                        <i class="fas fa-user-md mr-2"></i>Consult Specialist
+                                    </button>
+                                    <button class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-lg font-medium transition-colors">
+                                        <i class="fas fa-download mr-2"></i>Download Report
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Analysis History Tab -->
+                <div id="history-tab" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">AI Analysis History</h2>
+                        <button id="export-history-btn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors">
+                            <i class="fas fa-download mr-2"></i>Export History
+                        </button>
+                    </div>
+                    
+                    <div id="history-list" class="space-y-6">
+                        <!-- History items will be dynamically added here -->
+                        <div class="text-center py-12 text-gray-500">
+                            <i class="fas fa-history text-4xl mb-4"></i>
+                            <p>No analysis history yet. Start by analyzing your symptoms or scans.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- About AI Diagnosis Tab -->
+                <div id="info-tab" class="tab-content hidden">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- About AI Diagnosis -->
+                        <div class="lg:col-span-2">
+                            <div class="bg-white border border-gray-200 rounded-2xl p-6">
+                                <h3 class="font-bold text-gray-800 mb-4">About AI Diagnosis</h3>
+                                
+                                <div class="prose max-w-none">
+                                    <p class="text-gray-700 mb-4">
+                                        FastMedico's AI Diagnosis system uses advanced machine learning algorithms to provide preliminary medical analysis based on your symptoms and medical scans. Our AI has been trained on millions of medical cases and continues to learn and improve.
+                                    </p>
+                                    
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                        <div class="bg-blue-50 p-4 rounded-xl">
+                                            <h4 class="font-semibold text-blue-800 mb-2">How It Works</h4>
+                                            <ul class="text-sm text-blue-700 space-y-2">
+                                                <li class="flex items-start">
+                                                    <i class="fas fa-robot text-blue-600 mr-2 mt-0.5"></i>
+                                                    <span>Analyzes symptoms using natural language processing</span>
+                                                </li>
+                                                <li class="flex items-start">
+                                                    <i class="fas fa-brain text-blue-600 mr-2 mt-0.5"></i>
+                                                    <span>Compares patterns with vast medical database</span>
+                                                </li>
+                                                <li class="flex items-start">
+                                                    <i class="fas fa-chart-bar text-blue-600 mr-2 mt-0.5"></i>
+                                                    <span>Provides probability-based assessments</span>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        
+                                        <div class="bg-green-50 p-4 rounded-xl">
+                                            <h4 class="font-semibold text-green-800 mb-2">Important Notes</h4>
+                                            <ul class="text-sm text-green-700 space-y-2">
+                                                <li class="flex items-start">
+                                                    <i class="fas fa-exclamation-triangle text-green-600 mr-2 mt-0.5"></i>
+                                                    <span>AI diagnosis is not a substitute for professional medical advice</span>
+                                                </li>
+                                                <li class="flex items-start">
+                                                    <i class="fas fa-user-md text-green-600 mr-2 mt-0.5"></i>
+                                                    <span>Always consult with healthcare professionals for definitive diagnosis</span>
+                                                </li>
+                                                <li class="flex items-start">
+                                                    <i class="fas fa-shield-alt text-green-600 mr-2 mt-0.5"></i>
+                                                    <span>Your data is encrypted and handled with strict privacy protocols</span>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    
+                                    <h4 class="font-semibold text-gray-800 mb-2">Accuracy & Limitations</h4>
+                                    <p class="text-gray-700 mb-4">
+                                        Our AI system achieves an accuracy rate of 94.2% across common conditions. However, performance may vary for rare diseases or complex cases. The system is designed to complement, not replace, human medical expertise.
+                                    </p>
+                                    
+                                    <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                                        <div class="flex">
+                                            <div class="flex-shrink-0">
+                                                <i class="fas fa-exclamation-circle text-yellow-600 text-xl"></i>
+                                            </div>
+                                            <div class="ml-3">
+                                                <h3 class="text-sm font-medium text-yellow-800">Medical Disclaimer</h3>
+                                                <div class="mt-2 text-sm text-yellow-700">
+                                                    <p>This AI diagnosis tool is for informational purposes only and is not a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="emergency-btn-fixed" id="globalEmergencyBtn" title="Emergency SOS">
+        <i class="fas fa-phone-alt"></i>
+        <span>SOS</span>
+    </button>
+
+    <!-- Emergency Modal -->
+    <div class="emergency-modal" id="emergencyModal">
+        <div class="emergency-modal-content">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Emergency SOS</h3>
+            <p class="text-gray-600 mb-6">Are you sure you want to trigger emergency alert? This will notify emergency services and your contacts.</p>
+            
+            <div class="flex space-x-3">
+                <button class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-3 rounded-lg font-semibold transition-colors" id="cancelEmergency">
+                    Cancel
+                </button>
+                <button class="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg font-semibold transition-colors" id="confirmEmergency">
+                    Confirm SOS
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        // Sidebar Management
+class SidebarManager {
+    constructor() {
+        this.init();
+    }
+
+    init() {
+        this.updateSidebarUserInfo();
+        this.setupEventListeners();
+    }
+
+    // Update sidebar user information
+    updateSidebarUserInfo() {
+        const profileData = this.loadProfileData();
+        const firstName = profileData.personal.firstName || 'John';
+        const lastName = profileData.personal.lastName || 'Smith';
+        const fullName = `${firstName} ${lastName}`;
+        const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`;
+        const patientId = 'PM123456';
+        
+        // Update sidebar elements
+        const sidebarName = document.getElementById('sidebarName');
+        const sidebarInitials = document.getElementById('sidebarInitials');
+        const sidebarPatientId = document.getElementById('sidebarPatientId');
+        
+        if (sidebarName) sidebarName.textContent = fullName;
+        if (sidebarInitials) sidebarInitials.textContent = initials;
+        if (sidebarPatientId) sidebarPatientId.textContent = `Patient ID: ${patientId}`;
+        
+        // Also update header avatar
+        const headerAvatar = document.getElementById('headerAvatar');
+        if (headerAvatar && !headerAvatar.style.backgroundImage) {
+            headerAvatar.textContent = initials;
+        }
+    }
+
+    // Load profile data from localStorage
+    loadProfileData() {
+        const savedData = localStorage.getItem('fastMedicoProfile');
+        if (savedData) {
+            return JSON.parse(savedData);
+        }
+        
+        // Default data
+        const now = new Date().toISOString();
+        return {
+            personal: {
+                firstName: "John",
+                lastName: "Smith",
+                dob: "1985-06-15",
+                gender: "male",
+                email: "john.smith@example.com",
+                phone: "+1 (555) 123-4567",
+                address: "123 Main Street, Apt 4B",
+                city: "New York",
+                zipCode: "10001",
+                lastUpdated: now
+            },
+            health: {
+                heartRate: "72",
+                bloodPressure: "120/80",
+                temperature: "98.6",
+                oxygen: "98%",
+                bloodType: "O+",
+                allergies: "Penicillin, Peanuts",
+                medications: "Lisinopril 10mg daily, Atorvastatin 20mg daily",
+                conditions: "Hypertension, High Cholesterol",
+                emergencyNotes: "No known drug allergies aside from listed",
+                insuranceProvider: "Blue Cross Blue Shield",
+                policyNumber: "BCBS-87452963",
+                groupNumber: "GRP-5521",
+                lastUpdated: now
+            },
+            emergencyContacts: [],
+            settings: {},
+            lastProfileUpdate: now
+        };
+    }
+
+    // Setup event listeners
+    setupEventListeners() {
+        // Emergency SOS button
+        const sosButton = document.getElementById('sidebarEmergencyBtn');
+        if (sosButton) {
+            sosButton.addEventListener('click', () => {
+                const globalSosBtn = document.getElementById('globalEmergencyBtn');
+                if (globalSosBtn) {
+                    globalSosBtn.click();
+                }
+            });
+        }
+    }
+
+    // Public method to refresh sidebar (call this when profile updates)
+    refreshSidebar() {
+        this.updateSidebarUserInfo();
+    }
+}
+
+// Initialize sidebar manager
+window.sidebarManager = new SidebarManager();
+
+        // Common Health Conditions Database
+        const healthConditions = {
+            'cold': {
+                name: 'Common Cold',
+                description: 'Viral infection of the upper respiratory tract',
+                match: 'High Match',
+                precautions: [
+                    'Get plenty of rest and sleep',
+                    'Drink warm fluids like herbal tea or soup',
+                    'Use a humidifier to moisten the air',
+                    'Gargle with warm salt water for sore throat',
+                    'Use saline nasal drops for congestion'
+                ],
+                actions: [
+                    'Monitor body temperature regularly',
+                    'Avoid close contact with others to prevent spreading',
+                    'Wash hands frequently with soap and water',
+                    'Stay home from work or school until symptoms improve'
+                ],
+                note: 'Most colds resolve within 7-10 days. If symptoms persist beyond 2 weeks or you develop high fever, consult a healthcare provider.'
+            },
+            'flu': {
+                name: 'Influenza (Flu)',
+                description: 'Viral infection affecting respiratory system',
+                match: 'Medium Match',
+                precautions: [
+                    'Rest in a comfortable, quiet environment',
+                    'Stay hydrated with water, broths, and electrolyte drinks',
+                    'Apply warm compresses for body aches',
+                    'Use a cool mist humidifier in your room',
+                    'Take lukewarm baths to reduce fever discomfort'
+                ],
+                actions: [
+                    'Isolate yourself to prevent spreading the virus',
+                    'Monitor temperature every 4-6 hours',
+                    'Eat light, easy-to-digest foods',
+                    'Avoid alcohol and tobacco products'
+                ],
+                note: 'Influenza can lead to complications. If you experience difficulty breathing, chest pain, or confusion, seek medical attention immediately.'
+            },
+            'allergies': {
+                name: 'Seasonal Allergies',
+                description: 'Allergic reaction to pollen, dust, or other environmental triggers',
+                match: 'Medium Match',
+                precautions: [
+                    'Keep windows closed during high pollen seasons',
+                    'Use air purifiers with HEPA filters',
+                    'Shower after being outdoors to remove pollen',
+                    'Wash bedding weekly in hot water',
+                    'Wear sunglasses to protect eyes from allergens'
+                ],
+                actions: [
+                    'Monitor local pollen counts and stay indoors when high',
+                    'Use saline nasal rinses to clear nasal passages',
+                    'Keep pets clean and out of bedrooms',
+                    'Vacuum regularly with a HEPA filter vacuum'
+                ],
+                note: 'If allergy symptoms significantly impact your daily life or cause breathing difficulties, consult with an allergist or healthcare provider.'
+            },
+            'headache': {
+                name: 'Tension Headache',
+                description: 'Common headache often related to stress or muscle tension',
+                match: 'High Match',
+                precautions: [
+                    'Apply a warm or cold compress to forehead and neck',
+                    'Practice relaxation techniques like deep breathing',
+                    'Massage temples and neck muscles gently',
+                    'Ensure proper hydration throughout the day',
+                    'Maintain good posture while sitting and standing'
+                ],
+                actions: [
+                    'Rest in a quiet, dark room',
+                    'Apply gentle pressure to temples',
+                    'Practice neck and shoulder stretches',
+                    'Limit screen time and take regular breaks'
+                ],
+                note: 'If headaches are severe, frequent, or accompanied by vision changes, nausea, or confusion, seek medical evaluation.'
+            },
+            'stomach': {
+                name: 'Stomach Upset',
+                description: 'Digestive discomfort often caused by dietary factors',
+                match: 'Medium Match',
+                precautions: [
+                    'Stick to bland foods like bananas, rice, applesauce, and toast',
+                    'Avoid spicy, fatty, or fried foods',
+                    'Drink clear fluids like water, herbal tea, or clear broths',
+                    'Eat small, frequent meals instead of large ones',
+                    'Avoid caffeine, alcohol, and carbonated drinks'
+                ],
+                actions: [
+                    'Rest and avoid strenuous activity',
+                    'Apply warm compresses to abdomen',
+                    'Keep a food diary to identify triggers',
+                    'Practice stress-reduction techniques'
+                ],
+                note: 'If symptoms include severe pain, fever, blood in stool, or last more than 48 hours, consult a healthcare provider.'
+            },
+            'fatigue': {
+                name: 'General Fatigue',
+                description: 'Persistent tiredness or lack of energy',
+                match: 'Medium Match',
+                precautions: [
+                    'Establish a consistent sleep schedule',
+                    'Create a relaxing bedtime routine',
+                    'Ensure sleeping environment is dark, quiet, and cool',
+                    'Limit caffeine intake, especially in afternoon',
+                    'Practice good sleep hygiene habits'
+                ],
+                actions: [
+                    'Engage in light exercise like walking',
+                    'Stay hydrated with water throughout day',
+                    'Eat balanced meals with protein and complex carbs',
+                    'Take short breaks during work or study'
+                ],
+                note: 'Chronic fatigue could indicate underlying health issues. If fatigue persists despite adequate rest, consult with a healthcare provider.'
+            }
+        };
+
+        // Tab Switching Functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tab switching
+            const tabs = document.querySelectorAll('.ai-tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const targetTab = tab.getAttribute('data-tab');
+                    
+                    // Update active tab
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    // Show target tab content
+                    tabContents.forEach(content => {
+                        content.classList.remove('active');
+                        content.classList.add('hidden');
+                    });
+                    
+                    const targetContent = document.getElementById(`${targetTab}-tab`);
+                    targetContent.classList.remove('hidden');
+                    targetContent.classList.add('active');
+                });
+            });
+            
+            // Symptom tag selection
+            const symptomTags = document.querySelectorAll('.symptom-tag');
+            symptomTags.forEach(tag => {
+                tag.addEventListener('click', () => {
+                    tag.classList.toggle('selected');
+                });
+            });
+            
+            // File upload
+            const fileUpload = document.getElementById('file-upload');
+            const selectFilesBtn = document.getElementById('select-files-btn');
+            
+            selectFilesBtn.addEventListener('click', () => {
+                fileUpload.click();
+            });
+            
+            fileUpload.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    const fileName = this.files[0].name;
+                    const scanPreview = document.getElementById('scan-preview');
+                    
+                    // Create a file reader to preview image
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        scanPreview.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-contain rounded-xl" alt="Scan Preview">`;
+                    };
+                    reader.readAsDataURL(this.files[0]);
+                }
+            });
+            
+            // Drag and drop for file upload
+            const uploadArea = document.querySelector('.upload-area');
+            
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+            
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                
+                if (e.dataTransfer.files.length) {
+                    fileUpload.files = e.dataTransfer.files;
+                    const event = new Event('change', { bubbles: true });
+                    fileUpload.dispatchEvent(event);
+                }
+            });
+            
+            // Analyze symptoms button
+            const analyzeButton = document.getElementById('analyze-symptoms-btn');
+            const resultsContainer = document.getElementById('results-container');
+            const initialResults = document.getElementById('initial-results');
+            
+            analyzeButton.addEventListener('click', function() {
+                // Show loading state
+                const originalText = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Analyzing...';
+                this.disabled = true;
+                
+                // Get selected symptoms
+                const selectedSymptoms = [];
+                document.querySelectorAll('.symptom-tag.selected').forEach(tag => {
+                    selectedSymptoms.push(tag.getAttribute('data-symptom'));
+                });
+                
+                const symptomDescription = document.getElementById('symptom-description').value;
+                const duration = document.getElementById('symptom-duration').value;
+                const severity = document.getElementById('symptom-severity').value;
+                
+                // Simulate AI analysis
+                setTimeout(() => {
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                    
+                    // Determine which condition to show based on symptoms
+                    let conditionKey = 'cold'; // Default
+                    
+                    if (selectedSymptoms.includes('fever') && selectedSymptoms.includes('body-pain')) {
+                        conditionKey = 'flu';
+                    } else if (selectedSymptoms.includes('headache') && !selectedSymptoms.includes('fever')) {
+                        conditionKey = 'headache';
+                    } else if (selectedSymptoms.includes('stomach-pain') || selectedSymptoms.includes('nausea')) {
+                        conditionKey = 'stomach';
+                    } else if (selectedSymptoms.includes('fatigue') && selectedSymptoms.length <= 2) {
+                        conditionKey = 'fatigue';
+                    } else if (selectedSymptoms.includes('runny-nose') || selectedSymptoms.includes('sore-throat')) {
+                        conditionKey = 'allergies';
+                    }
+                    
+                    const condition = healthConditions[conditionKey];
+                    
+                    // Update results display
+                    document.getElementById('condition-name').textContent = condition.name;
+                    document.getElementById('condition-match').textContent = condition.match;
+                    document.getElementById('condition-description').textContent = condition.description;
+                    
+                    // Update precautions list
+                    const precautionsList = document.getElementById('precautions-list');
+                    precautionsList.innerHTML = '';
+                    condition.precautions.forEach(precaution => {
+                        const li = document.createElement('li');
+                        li.className = 'flex items-start';
+                        li.innerHTML = `<i class="fas fa-check-circle text-green-500 mr-2 mt-0.5"></i><span>${precaution}</span>`;
+                        precautionsList.appendChild(li);
+                    });
+                    
+                    // Update actions list
+                    const actionsList = document.getElementById('actions-list');
+                    actionsList.innerHTML = '';
+                    condition.actions.forEach(action => {
+                        const li = document.createElement('li');
+                        li.className = 'flex items-start';
+                        li.innerHTML = `<i class="fas fa-check-circle text-blue-500 mr-2 mt-0.5"></i><span>${action}</span>`;
+                        actionsList.appendChild(li);
+                    });
+                    
+                    // Update medical note
+                    document.getElementById('medical-note').textContent = condition.note;
+                    
+                    // Show results and hide initial message
+                    initialResults.classList.add('hidden');
+                    resultsContainer.classList.remove('hidden');
+                    
+                    // Add to history
+                    addToHistory(condition.name, selectedSymptoms.join(', '));
+                    
+                    // Scroll to results
+                    resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 2000);
+            });
+            
+            // Analyze scan button
+            const analyzeScanBtn = document.getElementById('analyze-scan-btn');
+            
+            analyzeScanBtn.addEventListener('click', function() {
+                if (!fileUpload.files.length) {
+                    alert('Please select a medical scan file first.');
+                    return;
+                }
+                
+                // Show loading state
+                const originalText = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Analyzing Scan...';
+                this.disabled = true;
+                
+                const scanType = document.getElementById('scan-type').value;
+                const bodyArea = document.getElementById('body-area').value;
+                
+                // Simulate AI scan analysis
+                setTimeout(() => {
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                    
+                    // Generate results based on scan type
+                    let findings = 'No significant abnormalities detected. Scan appears normal.';
+                    let confidence = 92;
+                    let recommendations = [
+                        'No immediate follow-up required',
+                        'Continue with regular check-ups',
+                        'Consult with radiologist for formal report'
+                    ];
+                    
+                    if (scanType === 'chest' && bodyArea === 'xray') {
+                        findings = 'Mild bronchial markings observed. No signs of pneumonia or other acute findings.';
+                        confidence = 88;
+                    } else if (scanType === 'head' && bodyArea === 'mri') {
+                        findings = 'Normal brain parenchyma. No evidence of mass lesions, hemorrhage, or acute infarct.';
+                        confidence = 95;
+                    }
+                    
+                    // Update results display
+                    document.getElementById('scan-findings').textContent = findings;
+                    document.getElementById('confidence-bar').style.width = `${confidence}%`;
+                    document.getElementById('confidence-percentage').textContent = `${confidence}%`;
+                    
+                    const recommendationsList = document.getElementById('scan-recommendations');
+                    recommendationsList.innerHTML = '';
+                    recommendations.forEach(rec => {
+                        const li = document.createElement('li');
+                        li.className = 'flex items-start';
+                        li.innerHTML = `<i class="fas fa-check-circle text-green-500 mr-2 mt-0.5"></i><span>${rec}</span>`;
+                        recommendationsList.appendChild(li);
+                    });
+                    
+                    // Show results
+                    document.getElementById('scan-results').classList.remove('hidden');
+                    document.getElementById('scan-actions').classList.remove('hidden');
+                    
+                    // Add to history
+                    addToHistory(`${scanType.toUpperCase()} Scan - ${bodyArea}`, 'Medical imaging analysis');
+                    
+                }, 3000);
+            });
+            
+            // Consult doctor button
+            document.getElementById('consult-doctor-btn').addEventListener('click', function() {
+                alert('Redirecting to healthcare providers directory...\n\nNote: This would navigate to the Doctors page in a real application.');
+            });
+            
+            // Save report button
+            document.getElementById('save-report-btn').addEventListener('click', function() {
+                const conditionName = document.getElementById('condition-name').textContent;
+                const timestamp = new Date().toLocaleString();
+                
+                alert(`Report for "${conditionName}" saved successfully!\n\nSaved at: ${timestamp}\n\nNote: In a real application, this would generate and download a PDF report.`);
+                
+                // Add to history with saved status
+                const historyList = document.getElementById('history-list');
+                if (historyList.children[0].classList.contains('text-center')) {
+                    historyList.innerHTML = '';
+                }
+            });
+            
+            // Export history button
+            document.getElementById('export-history-btn').addEventListener('click', function() {
+                alert('History exported successfully!\n\nNote: In a real application, this would generate a CSV or PDF file with all your analysis history.');
+            });
+            
+            // Add to history function
+            function addToHistory(title, description) {
+                const historyList = document.getElementById('history-list');
+                
+                // Remove initial message if present
+                if (historyList.children[0].classList.contains('text-center')) {
+                    historyList.innerHTML = '';
+                }
+                
+                const historyItem = document.createElement('div');
+                historyItem.className = 'bg-white border border-gray-200 rounded-2xl p-6 card-hover';
+                historyItem.innerHTML = `
+                    <div class="flex items-start justify-between">
+                        <div class="flex items-start space-x-4">
+                            <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center">
+                                <i class="fas fa-stethoscope text-blue-600 text-2xl"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-start justify-between">
+                                    <div>
+                                        <h3 class="font-bold text-gray-800 text-lg">${title}</h3>
+                                        <p class="text-gray-600">${description}</p>
+                                    </div>
+                                    <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-semibold">Completed</span>
+                                </div>
+                                
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                                    <div>
+                                        <p class="text-sm text-gray-500">Analysis Date</p>
+                                        <p class="font-semibold">${new Date().toLocaleDateString()}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-500">Type</p>
+                                        <p class="font-semibold">AI Analysis</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-500">Status</p>
+                                        <p class="font-semibold">Saved</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-500">Risk Level</p>
+                                        <p class="font-semibold flex items-center">
+                                            <span class="risk-indicator risk-low"></span>Low
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-end space-x-3 mt-4">
+                        <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors view-details-btn">
+                            <i class="fas fa-file-medical mr-2"></i>View Details
+                        </button>
+                    </div>
+                `;
+                
+                // Add click event for view details button
+                historyList.insertBefore(historyItem, historyList.firstChild);
+                
+                // Add event listener to the new button
+                historyItem.querySelector('.view-details-btn').addEventListener('click', function() {
+                    alert(`Viewing details for: ${title}\n\nDescription: ${description}\n\nDate: ${new Date().toLocaleDateString()}\n\nThis would show a detailed report in a real application.`);
+                });
+            }
+            
+            // Add staggered animation delays
+            const animateElements = document.querySelectorAll('.animate-scale-in, .animate-slide-in');
+            animateElements.forEach((el, index) => {
+                el.style.animationDelay = `${index * 0.1}s`;
+            });
+        });
+
+        // Global Emergency Button Functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const emergencyBtn = document.getElementById('globalEmergencyBtn');
+            const emergencyModal = document.getElementById('emergencyModal');
+            const confirmEmergency = document.getElementById('confirmEmergency');
+            const cancelEmergency = document.getElementById('cancelEmergency');
+
+            // Open emergency modal
+            emergencyBtn.addEventListener('click', function() {
+                emergencyModal.style.display = 'flex';
+            });
+
+            // Confirm emergency
+            confirmEmergency.addEventListener('click', function() {
+                triggerEmergencyAlert();
+                emergencyModal.style.display = 'none';
+            });
+
+            // Cancel emergency
+            cancelEmergency.addEventListener('click', function() {
+                emergencyModal.style.display = 'none';
+            });
+
+            // Close modal when clicking outside
+            emergencyModal.addEventListener('click', function(e) {
+                if (e.target === emergencyModal) {
+                    emergencyModal.style.display = 'none';
+                }
+            });
+
+            function triggerEmergencyAlert() {
+                const btn = emergencyBtn;
+                const originalHTML = btn.innerHTML;
+                
+                // Visual feedback
+                btn.classList.add('alerting');
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>ALERTING...</span>';
+                
+                // Simulate emergency process
+                setTimeout(() => {
+                    showEmergencyNotification('Emergency services alerted! Help is on the way.');
+                    
+                    // Reset button after 5 seconds
+                    setTimeout(() => {
+                        btn.classList.remove('alerting');
+                        btn.innerHTML = originalHTML;
+                    }, 5000);
+                    
+                }, 3000);
+
+                // Here you would typically:
+                // 1. Send emergency request to your backend
+                // 2. Notify emergency contacts
+                // 3. Share location data
+                // 4. Connect to emergency services
+            }
+
+            function showEmergencyNotification(message) {
+                // Create notification
+                const notification = document.createElement('div');
+                notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-4 rounded-lg shadow-lg z-1002 animate-pulse';
+                notification.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-ambulance text-xl"></i>
+                        <div>
+                            <h4 class="font-bold">EMERGENCY ALERT</h4>
+                            <p class="text-sm">${message}</p>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(notification);
+                
+                // Remove notification after 5 seconds
+                setTimeout(() => {
+                    notification.remove();
+                }, 5000);
+            }
+        });
+    </script>
+</body>
+</html>

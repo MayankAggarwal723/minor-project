@@ -1,0 +1,1687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FastMedico - Ambulance Services</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2563eb',
+                        'primary-dark': '#1d4ed8',
+                        secondary: '#10b981',
+                        accent: '#8b5cf6',
+                    },
+                    animation: {
+                        'slide-in': 'slideIn 0.6s ease-out',
+                        'fade-in': 'fadeIn 0.8s ease-out',
+                        'scale-in': 'scaleIn 0.5s ease-out',
+                        'pulse-gentle': 'pulseGentle 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        slideIn: {
+                            '0%': { opacity: '0', transform: 'translateX(-20px)' },
+                            '100%': { opacity: '1', transform: 'translateX(0)' }
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' }
+                        },
+                        scaleIn: {
+                            '0%': { opacity: '0', transform: 'scale(0.9)' },
+                            '100%': { opacity: '1', transform: 'scale(1)' }
+                        },
+                        pulseGentle: {
+                            '0%, 100%': { opacity: '1' },
+                            '50%': { opacity: '0.8' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+        }
+        
+        .sidebar {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        }
+        
+        .nav-item {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+        
+        .nav-item.active {
+            background: rgba(37, 99, 235, 0.2);
+            border-left: 4px solid #2563eb;
+        }
+        
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .quick-action {
+            transition: all 0.3s ease;
+        }
+        
+        .quick-action:hover {
+            transform: scale(1.05);
+        }
+        
+        .sos-pulse {
+            animation: sosPulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes sosPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+        }
+        
+        .notification-badge {
+            animation: bounce 2s ease-in-out infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .ambulance-tab {
+            transition: all 0.3s ease;
+        }
+        
+        .ambulance-tab.active {
+            background: #2563eb;
+            color: white;
+        }
+        
+        .ambulance-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .status-dispatched {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-arriving {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .status-ontheway {
+            background: #dcfce7;
+            color: #166534;
+        }
+        
+        .status-completed {
+            background: #e5e7eb;
+            color: #374151;
+        }
+        
+        .emergency-level {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .emergency-level:hover {
+            transform: translateY(-2px);
+        }
+        
+        .emergency-level.selected {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .level-critical.selected {
+            background: #dc2626 !important;
+            color: white !important;
+        }
+        
+        .level-urgent.selected {
+            background: #f59e0b !important;
+            color: white !important;
+        }
+        
+        .level-routine.selected {
+            background: #2563eb !important;
+            color: white !important;
+        }
+        
+        .level-critical {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+        
+        .level-urgent {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .level-routine {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .map-container {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .ambulance-marker {
+            width: 24px;
+            height: 24px;
+            background: #ef4444;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            animation: ambulanceMove 2s ease-in-out infinite;
+        }
+        
+        @keyframes ambulanceMove {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        .user-location {
+            width: 16px;
+            height: 16px;
+            background: #10b981;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .progress-tracker {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            margin: 2rem 0;
+        }
+        
+        .progress-tracker::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #e5e7eb;
+            transform: translateY(-50%);
+            z-index: 1;
+        }
+        
+        .progress-step {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .progress-step.active {
+            background: #2563eb;
+            border-color: #2563eb;
+            color: white;
+        }
+        
+        .progress-step.completed {
+            background: #10b981;
+            border-color: #10b981;
+            color: white;
+        }
+        
+        .ambulance-type-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .ambulance-type-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .ambulance-type-card.selected {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+        }
+        
+        .live-tracking-pulse {
+            animation: livePulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes livePulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .emergency-btn-fixed {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #dc2626, #ef4444);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            animation: emergencyPulse 2s infinite;
+        }
+
+        .emergency-btn-fixed:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 35px rgba(220, 38, 38, 0.6);
+        }
+
+        .emergency-btn-fixed i {
+            font-size: 20px;
+            margin-bottom: 2px;
+        }
+
+        .emergency-btn-fixed.alerting {
+            animation: emergencyAlert 0.5s infinite alternate;
+            background: linear-gradient(135deg, #991b1b, #dc2626);
+        }
+
+        @keyframes emergencyPulse {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
+            }
+            50% { 
+                transform: scale(1.05);
+                box-shadow: 0 8px 30px rgba(220, 38, 38, 0.6);
+            }
+        }
+
+        @keyframes emergencyAlert {
+            0% { 
+                background: linear-gradient(135deg, #dc2626, #ef4444);
+                transform: scale(1);
+            }
+            100% { 
+                background: linear-gradient(135deg, #991b1b, #dc2626);
+                transform: scale(1.1);
+            }
+        }
+
+        /* Emergency Modal */
+        .emergency-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1001;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .emergency-modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex">
+    <!-- Sidebar -->
+    <div class="sidebar w-64 min-h-screen text-white p-6 flex flex-col">
+        <!-- Logo -->
+        <div class="flex items-center space-x-3 mb-8 animate-slide-in">
+            <i class="fas fa-heartbeat text-2xl text-primary"></i>
+            <h1 class="text-xl font-bold">Fast<span class="text-primary">Medico</span></h1>
+        </div>
+
+        <!-- User Profile -->
+        <div class="flex items-center space-x-3 mb-8 p-4 bg-white/10 rounded-xl animate-scale-in">
+            <div id="sidebarInitials" class="w-12 h-12 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center">
+                <span class="text-white font-semibold">JS</span>
+            </div>
+            <div>
+                <h3 id="sidebarName" class="font-semibold">John Smith</h3>
+                <p id="sidebarPatientId" class="text-sm text-gray-300">Patient ID: PM123456</p>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="space-y-2 flex-1">
+            <a href="Dashboard.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-home w-5"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="My Profile.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-user-circle w-5"></i>
+                <span>My Profile</span>
+            </a>
+            <a href="hospitals.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-hospital w-5"></i>
+                <span>Hospitals</span>
+            </a>
+            <a href="Appointments.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-calendar-check w-5"></i>
+                <span>Appointments</span>
+            </a>
+            <a href="Prescriptions.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-prescription w-5"></i>
+                <span>Prescriptions</span>
+            </a>
+            <a href="Medical Records.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-file-medical w-5"></i>
+                <span>Medical Records</span>
+            </a>
+            <a href="Ambulance Services.html" class="nav-item active flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-ambulance w-5"></i>
+                <span>Ambulance</span>
+            </a>
+            <a href="Medicines.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-pills w-5"></i>
+                <span>Medicines</span>
+            </a>
+            <a href="Doctors.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-user-md w-5"></i>
+                <span>Doctors</span>
+            </a>
+            <a href="Blood Bank.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-tint w-5"></i>
+                <span>Blood Bank</span>
+            </a>
+            <a href="video consult.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-video w-5"></i>
+                <span>Video Consult</span>
+            </a>
+            <a href="Ai Diagnosis.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-robot w-5"></i>
+                <span>AI Diagnosis</span>
+            </a>
+        </nav>
+
+        <!-- Emergency SOS Button -->
+        <div class="mt-auto">
+            <button id="sidebarEmergencyBtn" class="w-full bg-red-500 hover:bg-red-600 text-white py-4 rounded-xl font-bold transition-all duration-300 sos-pulse">
+                <i class="fas fa-phone-alt mr-2"></i>EMERGENCY SOS
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 p-8 overflow-auto">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800 animate-slide-in">Ambulance Services</h1>
+                <p class="text-gray-600 animate-slide-in" style="animation-delay: 0.1s">Emergency medical transport and assistance</p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <!-- Notifications -->
+                <div class="relative">
+                    <i class="fas fa-bell text-2xl text-gray-600 cursor-pointer hover:text-primary transition-colors"></i>
+                    <span class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full notification-badge"></span>
+                </div>
+                
+                <!-- User Avatar -->
+                <div id="headerAvatar" class="w-10 h-10 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center text-white font-semibold cursor-pointer hover:scale-110 transition-transform">
+                    JS
+                </div>
+            </div>
+        </div>
+
+        <!-- Emergency Alert Banner -->
+        <div class="bg-red-50 border border-red-200 rounded-2xl p-4 mb-8 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-exclamation-triangle text-red-600"></i>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-red-800">Emergency Contact Ready</h3>
+                    <p class="text-red-600 text-sm">Your emergency contacts will be notified when you request an ambulance</p>
+                </div>
+            </div>
+            <button id="updateContactsBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors">
+                Update Contacts
+            </button>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 card-hover animate-scale-in">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Active Ambulances</p>
+                        <h3 class="text-2xl font-bold text-gray-800 mt-2">12</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-ambulance text-green-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 card-hover animate-scale-in" style="animation-delay: 0.1s">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Avg Response Time</p>
+                        <h3 class="text-2xl font-bold text-gray-800 mt-2">8.2 min</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-clock text-blue-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 card-hover animate-scale-in" style="animation-delay: 0.2s">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Today's Requests</p>
+                        <h3 class="text-2xl font-bold text-gray-800 mt-2">5</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-list text-purple-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 card-hover animate-scale-in" style="animation-delay: 0.3s">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Hospitals Nearby</p>
+                        <h3 class="text-2xl font-bold text-gray-800 mt-2">7</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-hospital text-orange-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ambulance Services Tabs -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 mb-8">
+            <div class="flex border-b border-gray-200 overflow-x-auto">
+                <button class="ambulance-tab active flex-1 py-4 px-6 text-center font-semibold rounded-tl-2xl whitespace-nowrap" data-tab="book">
+                    <i class="fas fa-plus-circle mr-2"></i>Book Ambulance
+                </button>
+                <button class="ambulance-tab flex-1 py-4 px-6 text-center font-semibold whitespace-nowrap" data-tab="track">
+                    <i class="fas fa-map-marker-alt mr-2"></i>Live Tracking
+                </button>
+                <button class="ambulance-tab flex-1 py-4 px-6 text-center font-semibold whitespace-nowrap" data-tab="history">
+                    <i class="fas fa-history mr-2"></i>Request History
+                </button>
+                <button class="ambulance-tab flex-1 py-4 px-6 text-center font-semibold rounded-tr-2xl whitespace-nowrap" data-tab="hospitals">
+                    <i class="fas fa-hospital mr-2"></i>Nearby Hospitals
+                </button>
+            </div>
+            
+            <!-- Tab Content -->
+            <div class="p-6">
+                <!-- Book Ambulance -->
+                <div id="book-tab" class="tab-content active">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">Book Emergency Ambulance</h2>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-500">Your location:</span>
+                            <span id="userLocation" class="font-semibold text-primary">Detected automatically</span>
+                            <button id="refreshLocationBtn" class="text-blue-500 hover:text-blue-600">
+                                <i class="fas fa-sync-alt ml-2"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <!-- Emergency Details -->
+                        <div class="lg:col-span-2">
+                            <div class="bg-white border border-gray-200 rounded-2xl p-6">
+                                <h3 class="font-bold text-gray-800 mb-4">Emergency Details</h3>
+                                
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Emergency Level</label>
+                                        <div class="grid grid-cols-3 gap-2">
+                                            <button class="emergency-level level-critical py-3 rounded-lg font-medium text-center" data-level="critical">
+                                                <i class="fas fa-heartbeat mr-2"></i>Critical
+                                            </button>
+                                            <button class="emergency-level level-urgent py-3 rounded-lg font-medium text-center" data-level="urgent">
+                                                <i class="fas fa-exclamation-triangle mr-2"></i>Urgent
+                                            </button>
+                                            <button class="emergency-level level-routine py-3 rounded-lg font-medium text-center" data-level="routine">
+                                                <i class="fas fa-stethoscope mr-2"></i>Routine
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Patient Condition</label>
+                                        <textarea id="patientCondition" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" rows="3" placeholder="Describe the patient's condition and symptoms"></textarea>
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Number of Patients</label>
+                                            <select id="patientCount" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                                <option value="1">1</option>
+                                                <option value="2">2</option>
+                                                <option value="3">3</option>
+                                                <option value="4+">4+</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Preferred Hospital</label>
+                                            <select id="preferredHospital" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                                <option value="nearest">Nearest Available</option>
+                                                <option value="city-general">City General Hospital</option>
+                                                <option value="medicare">MediCare Center</option>
+                                                <option value="unity">Unity Medical Center</option>
+                                                <option value="children">Children's Hospital</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Additional Notes</label>
+                                        <textarea id="additionalNotes" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" rows="2" placeholder="Any special requirements or instructions"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Ambulance Selection -->
+                        <div class="lg:col-span-1">
+                            <div class="bg-white border border-gray-200 rounded-2xl p-6">
+                                <h3 class="font-bold text-gray-800 mb-4">Select Ambulance Type</h3>
+                                
+                                <div class="space-y-4">
+                                    <!-- Basic Ambulance -->
+                                    <div class="ambulance-type-card bg-white border border-gray-200 rounded-xl p-4" data-type="basic" data-price="150">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                                                <i class="fas fa-ambulance text-blue-600"></i>
+                                            </div>
+                                            <div class="flex-1">
+                                                <h4 class="font-semibold text-gray-800">Basic Life Support</h4>
+                                                <p class="text-sm text-gray-600">Standard emergency transport</p>
+                                                <div class="flex items-center justify-between mt-2">
+                                                    <span class="font-bold text-gray-800">₹150</span>
+                                                    <span class="text-xs text-green-600">Available: 8</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Advanced Ambulance -->
+                                    <div class="ambulance-type-card bg-white border border-gray-200 rounded-xl p-4" data-type="advanced" data-price="250">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                                                <i class="fas fa-ambulance text-green-600"></i>
+                                            </div>
+                                            <div class="flex-1">
+                                                <h4 class="font-semibold text-gray-800">Advanced Life Support</h4>
+                                                <p class="text-sm text-gray-600">Paramedics & equipment</p>
+                                                <div class="flex items-center justify-between mt-2">
+                                                    <span class="font-bold text-gray-800">₹250</span>
+                                                    <span class="text-xs text-green-600">Available: 5</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Cardiac Ambulance -->
+                                    <div class="ambulance-type-card bg-white border border-gray-200 rounded-xl p-4" data-type="cardiac" data-price="350">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
+                                                <i class="fas fa-heart text-red-600"></i>
+                                            </div>
+                                            <div class="flex-1">
+                                                <h4 class="font-semibold text-gray-800">Cardiac Ambulance</h4>
+                                                <p class="text-sm text-gray-600">Specialized cardiac care</p>
+                                                <div class="flex items-center justify-between mt-2">
+                                                    <span class="font-bold text-gray-800">₹350</span>
+                                                    <span class="text-xs text-green-600">Available: 3</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- ICU Ambulance -->
+                                    <div class="ambulance-type-card bg-white border border-gray-200 rounded-xl p-4" data-type="icu" data-price="500">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                                                <i class="fas fa-procedures text-purple-600"></i>
+                                            </div>
+                                            <div class="flex-1">
+                                                <h4 class="font-semibold text-gray-800">ICU Ambulance</h4>
+                                                <p class="text-sm text-gray-600">Mobile intensive care unit</p>
+                                                <div class="flex items-center justify-between mt-2">
+                                                    <span class="font-bold text-gray-800">₹500</span>
+                                                    <span class="text-xs text-green-600">Available: 2</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <button id="requestAmbulanceBtn" class="w-full bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg font-semibold transition-colors mt-6">
+                                    <i class="fas fa-ambulance mr-2"></i>
+                                    Request Ambulance Now
+                                </button>
+                                
+                                <div class="mt-4 text-center">
+                                    <p class="text-xs text-gray-500">
+                                        <i class="fas fa-shield-alt mr-1"></i>
+                                        Your emergency contacts will be notified automatically
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Live Tracking -->
+                <div id="track-tab" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">Live Ambulance Tracking</h2>
+                        <div class="flex items-center space-x-2">
+                            <span class="flex items-center text-green-500 text-sm font-semibold">
+                                <span class="w-2 h-2 bg-green-500 rounded-full mr-2 live-tracking-pulse"></span>
+                                LIVE TRACKING ACTIVE
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <!-- Map Container -->
+                        <div class="lg:col-span-2">
+                            <div class="map-container h-96 relative">
+                                <!-- Simplified Map Representation -->
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <div class="text-white text-center">
+                                        <i class="fas fa-map-marked-alt text-4xl mb-2"></i>
+                                        <p class="text-lg font-semibold">Live Ambulance Tracking</p>
+                                        <p class="text-white/80">Real-time location updates</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Ambulance Marker -->
+                                <div class="absolute top-1/2 left-1/3 ambulance-marker"></div>
+                                
+                                <!-- User Location -->
+                                <div class="absolute top-1/2 left-2/3 user-location"></div>
+                                
+                                <!-- Route Line -->
+                                <div class="absolute top-1/2 left-1/3 right-1/3 h-1 bg-white/50 transform -translate-y-1/2"></div>
+                            </div>
+                            
+                            <div class="flex justify-between items-center mt-4">
+                                <div class="text-center">
+                                    <p class="text-sm text-gray-500">Ambulance Location</p>
+                                    <p id="ambulanceDistance" class="font-semibold">2.3 miles away</p>
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-sm text-gray-500">Estimated Arrival</p>
+                                    <p id="estimatedArrival" class="font-semibold text-green-600">8 minutes</p>
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-sm text-gray-500">Your Location</p>
+                                    <p id="currentLocation" class="font-semibold">Home</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Tracking Info -->
+                        <div class="lg:col-span-1">
+                            <div class="bg-white border border-gray-200 rounded-2xl p-6">
+                                <h3 class="font-bold text-gray-800 mb-4">Ambulance Details</h3>
+                                
+                                <div class="space-y-4">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-gray-600">Ambulance ID</span>
+                                        <span id="ambulanceId" class="font-semibold">AMB-7284</span>
+                                    </div>
+                                    
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-gray-600">Driver</span>
+                                        <span id="driverName" class="font-semibold">Sonu Kumar</span>
+                                    </div>
+                                    
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-gray-600">Type</span>
+                                        <span id="ambulanceType" class="font-semibold">Advanced Life Support</span>
+                                    </div>
+                                    
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-gray-600">Status</span>
+                                        <span id="ambulanceStatus" class="ambulance-status status-ontheway">On the way</span>
+                                    </div>
+                                    
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-gray-600">Current Speed</span>
+                                        <span id="ambulanceSpeed" class="font-semibold">45 mph</span>
+                                    </div>
+                                    
+                                    <div class="pt-4 border-t border-gray-200">
+                                        <h4 class="font-semibold text-gray-800 mb-2">Emergency Team</h4>
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                                <i class="fas fa-user-md text-blue-600 text-xs"></i>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-semibold">Dr. Prateek</p>
+                                                <p class="text-xs text-gray-500">Emergency Physician</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center space-x-3 mt-2">
+                                            <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                                <i class="fas fa-user-nurse text-green-600 text-xs"></i>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-semibold">Sandeep</p>
+                                                <p class="text-xs text-gray-500">Paramedic</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <button id="contactDriverBtn" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg font-medium transition-colors mt-4">
+                                        <i class="fas fa-phone-alt mr-2"></i>
+                                        Contact Driver
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress Tracker -->
+                    <div class="mt-8">
+                        <h3 class="font-bold text-gray-800 mb-4">Ambulance Progress</h3>
+                        <div class="progress-tracker">
+                            <div class="progress-step completed">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <div class="text-center absolute left-0 right-0 top-full mt-2">
+                                <p class="text-xs font-semibold">Requested</p>
+                                <p class="text-xs text-gray-500" id="step1-time">2:15 PM</p>
+                            </div>
+                            
+                            <div class="progress-step completed">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <div class="text-center absolute left-1/4 right-0 top-full mt-2 transform -translate-x-1/4">
+                                <p class="text-xs font-semibold">Dispatched</p>
+                                <p class="text-xs text-gray-500" id="step2-time">2:18 PM</p>
+                            </div>
+                            
+                            <div class="progress-step active">
+                                3
+                            </div>
+                            <div class="text-center absolute left-1/2 right-0 top-full mt-2 transform -translate-x-1/2">
+                                <p class="text-xs font-semibold">En Route</p>
+                                <p class="text-xs text-gray-500" id="step3-time">2:20 PM</p>
+                            </div>
+                            
+                            <div class="progress-step">
+                                4
+                            </div>
+                            <div class="text-center absolute left-3/4 right-0 top-full mt-2 transform -translate-x-3/4">
+                                <p class="text-xs font-semibold">Arriving</p>
+                                <p class="text-xs text-gray-500" id="step4-time">Est. 2:28 PM</p>
+                            </div>
+                            
+                            <div class="progress-step">
+                                5
+                            </div>
+                            <div class="text-center absolute left-full right-0 top-full mt-2 transform -translate-x-full">
+                                <p class="text-xs font-semibold">Completed</p>
+                                <p class="text-xs text-gray-500" id="step5-time">-</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Request History -->
+                <div id="history-tab" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">Ambulance Request History</h2>
+                        <button id="exportHistoryBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors">
+                            <i class="fas fa-download mr-2"></i>Export History
+                        </button>
+                    </div>
+                    
+                    <div id="historyList" class="space-y-6">
+                        <!-- History items will be dynamically added here -->
+                        <div class="text-center py-12 text-gray-500">
+                            <i class="fas fa-history text-4xl mb-4"></i>
+                            <p>No ambulance request history yet.</p>
+                            <p class="text-sm">Book your first ambulance to see history here.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Nearby Hospitals -->
+                <div id="hospitals-tab" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">Nearby Hospitals & Emergency Centers</h2>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-500">Within 10 miles of your location</span>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Hospital Card 1 -->
+                        <div class="bg-white border border-gray-200 rounded-2xl p-6 card-hover">
+                            <div class="flex items-start justify-between mb-4">
+                                <h3 class="font-bold text-gray-800 text-lg">City General Hospital</h3>
+                                <span class="flex items-center text-green-600 text-sm font-semibold">
+                                    <i class="fas fa-star text-yellow-400 mr-1"></i>
+                                    4.8
+                                </span>
+                            </div>
+                            
+                            <div class="space-y-3">
+                                <div class="flex items-center text-gray-600">
+                                    <i class="fas fa-map-marker-alt text-red-500 mr-2 w-4"></i>
+                                    <span class="text-sm">2.1 miles away</span>
+                                </div>
+                                <div class="flex items-center text-gray-600">
+                                    <i class="fas fa-clock text-blue-500 mr-2 w-4"></i>
+                                    <span class="text-sm">24/7 Emergency Department</span>
+                                </div>
+                                <div class="flex items-center text-gray-600">
+                                    <i class="fas fa-phone text-green-500 mr-2 w-4"></i>
+                                    <span class="text-sm">(555) 123-4567</span>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 pt-4 border-t border-gray-200">
+                                <h4 class="font-semibold text-gray-800 mb-2">Specialties</h4>
+                                <div class="flex flex-wrap gap-1">
+                                    <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Trauma</span>
+                                    <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Cardiology</span>
+                                    <span class="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded">Neurology</span>
+                                </div>
+                            </div>
+                            
+                            <button class="get-directions-btn w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg font-medium transition-colors mt-4" data-hospital="City General Hospital">
+                                <i class="fas fa-directions mr-2"></i>
+                                Get Directions
+                            </button>
+                        </div>
+                        
+                        <!-- Hospital Card 2 -->
+                        <div class="bg-white border border-gray-200 rounded-2xl p-6 card-hover">
+                            <div class="flex items-start justify-between mb-4">
+                                <h3 class="font-bold text-gray-800 text-lg">MediCare Center</h3>
+                                <span class="flex items-center text-green-600 text-sm font-semibold">
+                                    <i class="fas fa-star text-yellow-400 mr-1"></i>
+                                    4.6
+                                </span>
+                            </div>
+                            
+                            <div class="space-y-3">
+                                <div class="flex items-center text-gray-600">
+                                    <i class="fas fa-map-marker-alt text-red-500 mr-2 w-4"></i>
+                                    <span class="text-sm">3.5 miles away</span>
+                                </div>
+                                <div class="flex items-center text-gray-600">
+                                    <i class="fas fa-clock text-blue-500 mr-2 w-4"></i>
+                                    <span class="text-sm">24/7 Emergency Department</span>
+                                </div>
+                                <div class="flex items-center text-gray-600">
+                                    <i class="fas fa-phone text-green-500 mr-2 w-4"></i>
+                                    <span class="text-sm">(555) 987-6543</span>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 pt-4 border-t border-gray-200">
+                                <h4 class="font-semibold text-gray-800 mb-2">Specialties</h4>
+                                <div class="flex flex-wrap gap-1">
+                                    <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Pediatrics</span>
+                                    <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Orthopedics</span>
+                                    <span class="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded">Surgery</span>
+                                </div>
+                            </div>
+                            
+                            <button class="get-directions-btn w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg font-medium transition-colors mt-4" data-hospital="MediCare Center">
+                                <i class="fas fa-directions mr-2"></i>
+                                Get Directions
+                            </button>
+                        </div>
+                        
+                        <!-- Hospital Card 3 -->
+                        <div class="bg-white border border-gray-200 rounded-2xl p-6 card-hover">
+                            <div class="flex items-start justify-between mb-4">
+                                <h3 class="font-bold text-gray-800 text-lg">Unity Medical Center</h3>
+                                <span class="flex items-center text-green-600 text-sm font-semibold">
+                                    <i class="fas fa-star text-yellow-400 mr-1"></i>
+                                    4.9
+                                </span>
+                            </div>
+                            
+                            <div class="space-y-3">
+                                <div class="flex items-center text-gray-600">
+                                    <i class="fas fa-map-marker-alt text-red-500 mr-2 w-4"></i>
+                                    <span class="text-sm">5.2 miles away</span>
+                                </div>
+                                <div class="flex items-center text-gray-600">
+                                    <i class="fas fa-clock text-blue-500 mr-2 w-4"></i>
+                                    <span class="text-sm">24/7 Emergency Department</span>
+                                </div>
+                                <div class="flex items-center text-gray-600">
+                                    <i class="fas fa-phone text-green-500 mr-2 w-4"></i>
+                                    <span class="text-sm">(555) 456-7890</span>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 pt-4 border-t border-gray-200">
+                                <h4 class="font-semibold text-gray-800 mb-2">Specialties</h4>
+                                <div class="flex flex-wrap gap-1">
+                                    <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Cardiac Care</span>
+                                    <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">ICU</span>
+                                    <span class="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded">Oncology</span>
+                                </div>
+                            </div>
+                            
+                            <button class="get-directions-btn w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg font-medium transition-colors mt-4" data-hospital="Unity Medical Center">
+                                <i class="fas fa-directions mr-2"></i>
+                                Get Directions
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="emergency-btn-fixed" id="globalEmergencyBtn" title="Emergency SOS">
+        <i class="fas fa-phone-alt"></i>
+        <span>SOS</span>
+    </button>
+
+    <!-- Emergency Modal -->
+    <div class="emergency-modal" id="emergencyModal">
+        <div class="emergency-modal-content">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Emergency SOS</h3>
+            <p class="text-gray-600 mb-6">Are you sure you want to trigger emergency alert? This will notify emergency services and your contacts.</p>
+            
+            <div class="flex space-x-3">
+                <button class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-3 rounded-lg font-semibold transition-colors" id="cancelEmergency">
+                    Cancel
+                </button>
+                <button class="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg font-semibold transition-colors" id="confirmEmergency">
+                    Confirm SOS
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sidebar Management
+        class SidebarManager {
+            constructor() {
+                this.init();
+            }
+
+            init() {
+                this.updateSidebarUserInfo();
+                this.setupEventListeners();
+            }
+
+            // Update sidebar user information
+            updateSidebarUserInfo() {
+                const profileData = this.loadProfileData();
+                const firstName = profileData.personal.firstName || 'John';
+                const lastName = profileData.personal.lastName || 'Smith';
+                const fullName = `${firstName} ${lastName}`;
+                const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`;
+                const patientId = 'PM123456';
+                
+                // Update sidebar elements
+                const sidebarName = document.getElementById('sidebarName');
+                const sidebarInitials = document.getElementById('sidebarInitials');
+                const sidebarPatientId = document.getElementById('sidebarPatientId');
+                
+                if (sidebarName) sidebarName.textContent = fullName;
+                if (sidebarInitials) sidebarInitials.textContent = initials;
+                if (sidebarPatientId) sidebarPatientId.textContent = `Patient ID: ${patientId}`;
+                
+                // Also update header avatar
+                const headerAvatar = document.getElementById('headerAvatar');
+                if (headerAvatar && !headerAvatar.style.backgroundImage) {
+                    headerAvatar.textContent = initials;
+                }
+            }
+
+            // Load profile data from localStorage
+            loadProfileData() {
+                const savedData = localStorage.getItem('fastMedicoProfile');
+                if (savedData) {
+                    return JSON.parse(savedData);
+                }
+                
+                // Default data
+                const now = new Date().toISOString();
+                return {
+                    personal: {
+                        firstName: "John",
+                        lastName: "Smith",
+                        dob: "1985-06-15",
+                        gender: "male",
+                        email: "john.smith@example.com",
+                        phone: "+1 (555) 123-4567",
+                        address: "123 Main Street, Apt 4B",
+                        city: "New York",
+                        zipCode: "10001",
+                        lastUpdated: now
+                    },
+                    health: {
+                        heartRate: "72",
+                        bloodPressure: "120/80",
+                        temperature: "98.6",
+                        oxygen: "98%",
+                        bloodType: "O+",
+                        allergies: "Penicillin, Peanuts",
+                        medications: "Lisinopril 10mg daily, Atorvastatin 20mg daily",
+                        conditions: "Hypertension, High Cholesterol",
+                        emergencyNotes: "No known drug allergies aside from listed",
+                        insuranceProvider: "Blue Cross Blue Shield",
+                        policyNumber: "BCBS-87452963",
+                        groupNumber: "GRP-5521",
+                        lastUpdated: now
+                    },
+                    emergencyContacts: [],
+                    settings: {},
+                    lastProfileUpdate: now
+                };
+            }
+
+            // Setup event listeners
+            setupEventListeners() {
+                // Emergency SOS button
+                const sosButton = document.getElementById('sidebarEmergencyBtn');
+                if (sosButton) {
+                    sosButton.addEventListener('click', () => {
+                        const globalSosBtn = document.getElementById('globalEmergencyBtn');
+                        if (globalSosBtn) {
+                            globalSosBtn.click();
+                        }
+                    });
+                }
+            }
+
+            // Public method to refresh sidebar (call this when profile updates)
+            refreshSidebar() {
+                this.updateSidebarUserInfo();
+            }
+        }
+
+        // Ambulance Services Functionality
+        class AmbulanceServices {
+            constructor() {
+                this.currentBooking = null;
+                this.activeAmbulance = null;
+                this.history = JSON.parse(localStorage.getItem('ambulanceHistory') || '[]');
+                this.selectedEmergencyLevel = null;
+                this.selectedAmbulanceType = null;
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.loadHistory();
+                this.simulateActiveAmbulance();
+            }
+
+            setupEventListeners() {
+                // Tab switching
+                const tabs = document.querySelectorAll('.ambulance-tab');
+                const tabContents = document.querySelectorAll('.tab-content');
+                
+                tabs.forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        const targetTab = tab.getAttribute('data-tab');
+                        
+                        // Update active tab
+                        tabs.forEach(t => t.classList.remove('active'));
+                        tab.classList.add('active');
+                        
+                        // Show target tab content
+                        tabContents.forEach(content => {
+                            content.classList.remove('active');
+                            content.classList.add('hidden');
+                        });
+                        
+                        const targetContent = document.getElementById(`${targetTab}-tab`);
+                        targetContent.classList.remove('hidden');
+                        targetContent.classList.add('active');
+                    });
+                });
+
+                // Emergency level selection
+                document.querySelectorAll('.emergency-level').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        document.querySelectorAll('.emergency-level').forEach(b => {
+                            b.classList.remove('selected');
+                        });
+                        e.target.classList.add('selected');
+                        this.selectedEmergencyLevel = e.target.getAttribute('data-level');
+                    });
+                });
+
+                // Ambulance type selection
+                document.querySelectorAll('.ambulance-type-card').forEach(card => {
+                    card.addEventListener('click', (e) => {
+                        document.querySelectorAll('.ambulance-type-card').forEach(c => {
+                            c.classList.remove('selected');
+                        });
+                        e.currentTarget.classList.add('selected');
+                        this.selectedAmbulanceType = e.currentTarget.getAttribute('data-type');
+                    });
+                });
+
+                // Request ambulance button
+                document.getElementById('requestAmbulanceBtn').addEventListener('click', () => {
+                    this.requestAmbulance();
+                });
+
+                // Contact driver button
+                document.getElementById('contactDriverBtn').addEventListener('click', () => {
+                    this.contactDriver();
+                });
+
+                // Export history button
+                document.getElementById('exportHistoryBtn').addEventListener('click', () => {
+                    this.exportHistory();
+                });
+
+                // Get directions buttons
+                document.querySelectorAll('.get-directions-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const hospital = e.target.getAttribute('data-hospital');
+                        this.getDirections(hospital);
+                    });
+                });
+
+                // Update contacts button
+                document.getElementById('updateContactsBtn').addEventListener('click', () => {
+                    this.updateContacts();
+                });
+
+                // Refresh location button
+                document.getElementById('refreshLocationBtn').addEventListener('click', () => {
+                    this.refreshLocation();
+                });
+            }
+
+            requestAmbulance() {
+                if (!this.selectedEmergencyLevel) {
+                    this.showNotification('Please select an emergency level', 'error');
+                    return;
+                }
+
+                if (!this.selectedAmbulanceType) {
+                    this.showNotification('Please select an ambulance type', 'error');
+                    return;
+                }
+
+                const patientCondition = document.getElementById('patientCondition').value;
+                if (!patientCondition.trim()) {
+                    this.showNotification('Please describe the patient condition', 'error');
+                    return;
+                }
+
+                const patientCount = document.getElementById('patientCount').value;
+                const preferredHospital = document.getElementById('preferredHospital').value;
+                const additionalNotes = document.getElementById('additionalNotes').value;
+                
+                const selectedCard = document.querySelector('.ambulance-type-card.selected');
+                const price = selectedCard.getAttribute('data-price');
+                const ambulanceName = selectedCard.querySelector('h4').textContent;
+
+                // Show loading
+                const requestBtn = document.getElementById('requestAmbulanceBtn');
+                const originalText = requestBtn.innerHTML;
+                requestBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...';
+                requestBtn.disabled = true;
+
+                // Simulate API call
+                setTimeout(() => {
+                    // Create booking
+                    this.currentBooking = {
+                        id: 'AMB-' + Date.now().toString().slice(-6),
+                        timestamp: new Date().toISOString(),
+                        emergencyLevel: this.selectedEmergencyLevel,
+                        ambulanceType: this.selectedAmbulanceType,
+                        ambulanceName: ambulanceName,
+                        price: price,
+                        patientCondition: patientCondition,
+                        patientCount: patientCount,
+                        preferredHospital: preferredHospital,
+                        additionalNotes: additionalNotes,
+                        status: 'dispatched'
+                    };
+
+                    // Add to history
+                    this.history.unshift({
+                        ...this.currentBooking,
+                        status: 'completed',
+                        completedAt: new Date(Date.now() + 3600000).toISOString() // 1 hour later
+                    });
+                    localStorage.setItem('ambulanceHistory', JSON.stringify(this.history));
+
+                    // Reset form
+                    document.querySelectorAll('.emergency-level').forEach(b => b.classList.remove('selected'));
+                    document.querySelectorAll('.ambulance-type-card').forEach(c => c.classList.remove('selected'));
+                    document.getElementById('patientCondition').value = '';
+                    document.getElementById('additionalNotes').value = '';
+                    this.selectedEmergencyLevel = null;
+                    this.selectedAmbulanceType = null;
+
+                    // Show success
+                    this.showNotification(`Ambulance requested successfully! Ambulance ID: ${this.currentBooking.id}`);
+                    requestBtn.innerHTML = originalText;
+                    requestBtn.disabled = false;
+
+                    // Update history display
+                    this.loadHistory();
+
+                    // Switch to tracking tab
+                    document.querySelector('[data-tab="track"]').click();
+
+                    // Simulate active ambulance
+                    this.simulateActiveAmbulance();
+                    
+                }, 2000);
+            }
+
+            contactDriver() {
+                this.showNotification('Connecting to ambulance driver...', 'info');
+                setTimeout(() => {
+                    this.showNotification('Call connected to driver Michael Rodriguez', 'success');
+                }, 1500);
+            }
+
+            exportHistory() {
+                if (this.history.length === 0) {
+                    this.showNotification('No history to export', 'error');
+                    return;
+                }
+
+                const historyText = this.history.map(item => 
+                    `${item.timestamp.split('T')[0]} | ${item.ambulanceName} | ${item.emergencyLevel.toUpperCase()} | ₹${item.price}`
+                ).join('\n');
+
+                const blob = new Blob([historyText], { type: 'text/plain' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `ambulance_history_${new Date().toISOString().split('T')[0]}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+
+                this.showNotification('History exported successfully!', 'success');
+            }
+
+            loadHistory() {
+                const historyList = document.getElementById('historyList');
+                if (this.history.length === 0) {
+                    historyList.innerHTML = `
+                        <div class="text-center py-12 text-gray-500">
+                            <i class="fas fa-history text-4xl mb-4"></i>
+                            <p>No ambulance request history yet.</p>
+                            <p class="text-sm">Book your first ambulance to see history here.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                historyList.innerHTML = this.history.slice(0, 5).map(item => `
+                    <div class="bg-white border border-gray-200 rounded-2xl p-6 card-hover">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-start space-x-4">
+                                <div class="w-16 h-16 ${this.getAmbulanceColor(item.ambulanceType)} rounded-2xl flex items-center justify-center">
+                                    <i class="fas fa-ambulance ${this.getAmbulanceIconColor(item.ambulanceType)} text-2xl"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-start justify-between">
+                                        <div>
+                                            <h3 class="font-bold text-gray-800 text-lg">${item.emergencyLevel.charAt(0).toUpperCase() + item.emergencyLevel.slice(1)} Emergency</h3>
+                                            <p class="text-gray-600">${item.ambulanceName}</p>
+                                        </div>
+                                        <span class="ambulance-status status-completed">Completed</span>
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                                        <div>
+                                            <p class="text-sm text-gray-500">Request Date</p>
+                                            <p class="font-semibold">${new Date(item.timestamp).toLocaleDateString()}</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm text-gray-500">Ambulance ID</p>
+                                            <p class="font-semibold">${item.id}</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm text-gray-500">Hospital</p>
+                                            <p class="font-semibold">${this.getHospitalName(item.preferredHospital)}</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm text-gray-500">Cost</p>
+                                            <p class="font-semibold">₹${item.price}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex justify-end space-x-3 mt-4">
+                            <button class="view-report-btn bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors" data-id="${item.id}">
+                                <i class="fas fa-file-medical mr-2"></i>View Report
+                            </button>
+                            <button class="book-again-btn bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors" data-type="${item.ambulanceType}">
+                                <i class="fas fa-redo mr-2"></i>Book Again
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Add event listeners to dynamic buttons
+                document.querySelectorAll('.view-report-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = e.target.getAttribute('data-id');
+                        this.viewReport(id);
+                    });
+                });
+
+                document.querySelectorAll('.book-again-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const type = e.target.getAttribute('data-type');
+                        this.bookAgain(type);
+                    });
+                });
+            }
+
+            getAmbulanceColor(type) {
+                const colors = {
+                    'basic': 'bg-blue-100',
+                    'advanced': 'bg-green-100',
+                    'cardiac': 'bg-red-100',
+                    'icu': 'bg-purple-100'
+                };
+                return colors[type] || 'bg-gray-100';
+            }
+
+            getAmbulanceIconColor(type) {
+                const colors = {
+                    'basic': 'text-blue-600',
+                    'advanced': 'text-green-600',
+                    'cardiac': 'text-red-600',
+                    'icu': 'text-purple-600'
+                };
+                return colors[type] || 'text-gray-600';
+            }
+
+            getHospitalName(code) {
+                const hospitals = {
+                    'nearest': 'Nearest Available',
+                    'city-general': 'City General',
+                    'medicare': 'MediCare Center',
+                    'unity': 'Unity Medical',
+                    'children': 'Children\'s Hospital'
+                };
+                return hospitals[code] || code;
+            }
+
+            viewReport(id) {
+                const item = this.history.find(h => h.id === id);
+                if (item) {
+                    const report = `
+Emergency Ambulance Report
+-------------------------
+Ambulance ID: ${item.id}
+Request Date: ${new Date(item.timestamp).toLocaleString()}
+Emergency Level: ${item.emergencyLevel.toUpperCase()}
+Ambulance Type: ${item.ambulanceName}
+Patient Count: ${item.patientCount}
+Preferred Hospital: ${this.getHospitalName(item.preferredHospital)}
+Cost: ₹${item.price}
+Status: ${item.status.toUpperCase()}
+                    `;
+                    alert(report);
+                }
+            }
+
+            bookAgain(type) {
+                document.querySelector('[data-tab="book"]').click();
+                document.querySelector(`.ambulance-type-card[data-type="${type}"]`).click();
+                this.showNotification('Ambulance type selected. Please complete the booking form.', 'info');
+            }
+
+            getDirections(hospital) {
+                this.showNotification(`Opening directions to ${hospital}...`, 'info');
+                setTimeout(() => {
+                    this.showNotification(`Directions to ${hospital} opened in maps`, 'success');
+                }, 1000);
+            }
+
+            updateContacts() {
+                this.showNotification('Redirecting to emergency contacts page...', 'info');
+                // In a real app, this would redirect to the profile page
+                setTimeout(() => {
+                    window.location.href = 'My Profile.html#emergency-contacts';
+                }, 1500);
+            }
+
+            refreshLocation() {
+                const locationBtn = document.getElementById('refreshLocationBtn');
+                const icon = locationBtn.querySelector('i');
+                icon.className = 'fas fa-spinner fa-spin ml-2';
+                
+                setTimeout(() => {
+                    const locations = ['123 Main St, New York', '456 Park Ave, Manhattan', '789 Broadway, Brooklyn'];
+                    const randomLocation = locations[Math.floor(Math.random() * locations.length)];
+                    document.getElementById('userLocation').textContent = randomLocation;
+                    document.getElementById('currentLocation').textContent = randomLocation.split(',')[0];
+                    icon.className = 'fas fa-sync-alt ml-2';
+                    this.showNotification('Location updated successfully', 'success');
+                }, 1500);
+            }
+
+            simulateActiveAmbulance() {
+                // Update ambulance info on tracking tab
+                if (this.currentBooking) {
+                    document.getElementById('ambulanceId').textContent = this.currentBooking.id;
+                    document.getElementById('ambulanceType').textContent = this.currentBooking.ambulanceName;
+                    
+                    // Simulate ambulance movement
+                    setInterval(() => {
+                        const distances = ['2.1 miles away', '1.8 miles away', '1.2 miles away', '0.5 miles away'];
+                        const times = ['7 minutes', '5 minutes', '3 minutes', '1 minute'];
+                        const randomIndex = Math.floor(Math.random() * distances.length);
+                        
+                        document.getElementById('ambulanceDistance').textContent = distances[randomIndex];
+                        document.getElementById('estimatedArrival').textContent = times[randomIndex];
+                    }, 5000);
+                }
+            }
+
+            showNotification(message, type = 'success') {
+                const notification = document.createElement('div');
+                notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50 ${
+                    type === 'error' ? 'bg-red-500' : type === 'info' ? 'bg-blue-500' : 'bg-green-500'
+                } text-white`;
+                notification.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <i class="fas ${
+                            type === 'error' ? 'fa-exclamation-triangle' : 
+                            type === 'info' ? 'fa-info-circle' : 'fa-check-circle'
+                        }"></i>
+                        <span>${message}</span>
+                    </div>
+                `;
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.classList.remove('translate-x-full');
+                }, 100);
+                
+                setTimeout(() => {
+                    notification.classList.add('translate-x-full');
+                    setTimeout(() => {
+                        document.body.removeChild(notification);
+                    }, 300);
+                }, 3000);
+            }
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Sidebar Manager
+            window.sidebarManager = new SidebarManager();
+            
+            // Initialize Ambulance Services
+            window.ambulanceServices = new AmbulanceServices();
+            
+            // Add staggered animation delays
+            const animateElements = document.querySelectorAll('.animate-scale-in, .animate-slide-in');
+            animateElements.forEach((el, index) => {
+                el.style.animationDelay = `${index * 0.1}s`;
+            });
+
+            // Global Emergency Button Functionality
+            const emergencyBtn = document.getElementById('globalEmergencyBtn');
+            const emergencyModal = document.getElementById('emergencyModal');
+            const confirmEmergency = document.getElementById('confirmEmergency');
+            const cancelEmergency = document.getElementById('cancelEmergency');
+
+            // Open emergency modal
+            emergencyBtn.addEventListener('click', function() {
+                emergencyModal.style.display = 'flex';
+            });
+
+            // Confirm emergency
+            confirmEmergency.addEventListener('click', function() {
+                triggerEmergencyAlert();
+                emergencyModal.style.display = 'none';
+            });
+
+            // Cancel emergency
+            cancelEmergency.addEventListener('click', function() {
+                emergencyModal.style.display = 'none';
+            });
+
+            // Close modal when clicking outside
+            emergencyModal.addEventListener('click', function(e) {
+                if (e.target === emergencyModal) {
+                    emergencyModal.style.display = 'none';
+                }
+            });
+
+            function triggerEmergencyAlert() {
+                const btn = emergencyBtn;
+                const originalHTML = btn.innerHTML;
+                
+                // Visual feedback
+                btn.classList.add('alerting');
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>ALERTING...</span>';
+                
+                // Simulate emergency process
+                setTimeout(() => {
+                    showEmergencyNotification('Emergency services alerted! Help is on the way.');
+                    
+                    // Reset button after 5 seconds
+                    setTimeout(() => {
+                        btn.classList.remove('alerting');
+                        btn.innerHTML = originalHTML;
+                    }, 5000);
+                    
+                }, 3000);
+
+                // Here you would typically:
+                // 1. Send emergency request to your backend
+                // 2. Notify emergency contacts
+                // 3. Share location data
+                // 4. Connect to emergency services
+            }
+
+            function showEmergencyNotification(message) {
+                // Create notification
+                const notification = document.createElement('div');
+                notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-4 rounded-lg shadow-lg z-1002 animate-pulse';
+                notification.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-ambulance text-xl"></i>
+                        <div>
+                            <h4 class="font-bold">EMERGENCY ALERT</h4>
+                            <p class="text-sm">${message}</p>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(notification);
+                
+                // Remove notification after 5 seconds
+                setTimeout(() => {
+                    notification.remove();
+                }, 5000);
+            }
+        });
+    </script>
+</body>
+</html>

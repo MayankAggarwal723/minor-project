@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FastMedico - Appointments</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2563eb',
+                        'primary-dark': '#1d4ed8',
+                        secondary: '#10b981',
+                        accent: '#8b5cf6',
+                    },
+                    animation: {
+                        'slide-in': 'slideIn 0.6s ease-out',
+                        'fade-in': 'fadeIn 0.8s ease-out',
+                        'scale-in': 'scaleIn 0.5s ease-out',
+                        'pulse-gentle': 'pulseGentle 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        slideIn: {
+                            '0%': { opacity: '0', transform: 'translateX(-20px)' },
+                            '100%': { opacity: '1', transform: 'translateX(0)' }
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' }
+                        },
+                        scaleIn: {
+                            '0%': { opacity: '0', transform: 'scale(0.9)' },
+                            '100%': { opacity: '1', transform: 'scale(1)' }
+                        },
+                        pulseGentle: {
+                            '0%, 100%': { opacity: '1' },
+                            '50%': { opacity: '0.8' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+        }
+        
+        .sidebar {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        }
+        
+        .nav-item {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+        
+        .nav-item.active {
+            background: rgba(37, 99, 235, 0.2);
+            border-left: 4px solid #2563eb;
+        }
+        
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .quick-action {
+            transition: all 0.3s ease;
+        }
+        
+        .quick-action:hover {
+            transform: scale(1.05);
+        }
+        
+        .sos-pulse {
+            animation: sosPulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes sosPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+        }
+        
+        .notification-badge {
+            animation: bounce 2s ease-in-out infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .appointment-tab {
+            transition: all 0.3s ease;
+        }
+        
+        .appointment-tab.active {
+            background: #2563eb;
+            color: white;
+        }
+        
+        .time-slot {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .time-slot:hover {
+            background: #dbeafe;
+            border-color: #2563eb;
+        }
+        
+        .time-slot.selected {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+        
+        .doctor-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .doctor-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .doctor-card.selected {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+        }
+        
+        .appointment-type-btn {
+            transition: all 0.3s ease;
+        }
+        
+        .appointment-type-btn.selected {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+        
+        .emergency-btn-fixed {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #dc2626, #ef4444);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            animation: emergencyPulse 2s infinite;
+        }
+
+        .emergency-btn-fixed:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 35px rgba(220, 38, 38, 0.6);
+        }
+
+        .emergency-btn-fixed i {
+            font-size: 20px;
+            margin-bottom: 2px;
+        }
+
+        .emergency-btn-fixed.alerting {
+            animation: emergencyAlert 0.5s infinite alternate;
+            background: linear-gradient(135deg, #991b1b, #dc2626);
+        }
+
+        @keyframes emergencyPulse {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
+            }
+            50% { 
+                transform: scale(1.05);
+                box-shadow: 0 8px 30px rgba(220, 38, 38, 0.6);
+            }
+        }
+
+        @keyframes emergencyAlert {
+            0% { 
+                background: linear-gradient(135deg, #dc2626, #ef4444);
+                transform: scale(1);
+            }
+            100% { 
+                background: linear-gradient(135deg, #991b1b, #dc2626);
+                transform: scale(1.1);
+            }
+        }
+
+        /* Emergency Modal */
+        .emergency-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1001;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .emergency-modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex">
+    <!-- Sidebar -->
+    <div class="sidebar w-64 min-h-screen text-white p-6 flex flex-col">
+        <!-- Logo -->
+        <div class="flex items-center space-x-3 mb-8 animate-slide-in">
+            <i class="fas fa-heartbeat text-2xl text-primary"></i>
+            <h1 class="text-xl font-bold">Fast<span class="text-primary">Medico</span></h1>
+        </div>
+
+        <!-- User Profile -->
+        <div class="flex items-center space-x-3 mb-8 p-4 bg-white/10 rounded-xl animate-scale-in">
+            <div id="sidebarInitials" class="w-12 h-12 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center">
+                <span class="text-white font-semibold">RS</span>
+            </div>
+            <div>
+                <h3 id="sidebarName" class="font-semibold">Rajesh Sharma</h3>
+                <p id="sidebarPatientId" class="text-sm text-gray-300">Patient ID: PM123456</p>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="space-y-2 flex-1">
+            <a href="Dashboard.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-home w-5"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="My Profile.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-user-circle w-5"></i>
+                <span>My Profile</span>
+            </a>
+            <a href="hospitals.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-hospital w-5"></i>
+                <span>Hospitals</span>
+            </a>
+            <a href="Appointments.html" class="nav-item active flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-calendar-check w-5"></i>
+                <span>Appointments</span>
+            </a>
+            <a href="Prescriptions.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-prescription w-5"></i>
+                <span>Prescriptions</span>
+            </a>
+            <a href="Medical Records.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-file-medical w-5"></i>
+                <span>Medical Records</span>
+            </a>
+            <a href="Ambulance Services.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-ambulance w-5"></i>
+                <span>Ambulance</span>
+            </a>
+            <a href="Medicines.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-pills w-5"></i>
+                <span>Medicines</span>
+            </a>
+            <a href="Doctors.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-user-md w-5"></i>
+                <span>Doctors</span>
+            </a>
+            <a href="Blood Bank.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-tint w-5"></i>
+                <span>Blood Bank</span>
+            </a>
+            <a href="video consult.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-video w-5"></i>
+                <span>Video Consult</span>
+            </a>
+            <a href="Ai Diagnosis.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-robot w-5"></i>
+                <span>AI Diagnosis</span>
+            </a>
+        </nav>
+
+        <!-- Emergency SOS Button -->
+        <div class="mt-auto">
+            <button id="sidebarEmergencyBtn" class="w-full bg-red-500 hover:bg-red-600 text-white py-4 rounded-xl font-bold transition-all duration-300 sos-pulse">
+                <i class="fas fa-phone-alt mr-2"></i>
+                EMERGENCY SOS
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 p-8 overflow-auto">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800 animate-slide-in">Appointments</h1>
+                <p class="text-gray-600 animate-slide-in" style="animation-delay: 0.1s">Manage your medical appointments</p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <!-- Notifications -->
+                <div class="relative">
+                    <i class="fas fa-bell text-2xl text-gray-600 cursor-pointer hover:text-primary transition-colors"></i>
+                    <span class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full notification-badge"></span>
+                </div>
+                
+                <!-- User Avatar -->
+                <div id="headerAvatar" class="w-10 h-10 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center text-white font-semibold cursor-pointer hover:scale-110 transition-transform">
+                    RS
+                </div>
+            </div>
+        </div>
+
+        <!-- Appointment Tabs -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 mb-8">
+            <div class="flex border-b border-gray-200">
+                <button class="appointment-tab active flex-1 py-4 px-6 text-center font-semibold rounded-tl-2xl" data-tab="upcoming">
+                    <i class="fas fa-calendar-alt mr-2"></i>Upcoming
+                </button>
+                <button class="appointment-tab flex-1 py-4 px-6 text-center font-semibold" data-tab="past">
+                    <i class="fas fa-history mr-2"></i>Past Appointments
+                </button>
+                <button class="appointment-tab flex-1 py-4 px-6 text-center font-semibold rounded-tr-2xl" data-tab="book">
+                    <i class="fas fa-plus-circle mr-2"></i>Book New
+                </button>
+            </div>
+            
+            <!-- Tab Content -->
+            <div class="p-6">
+                <!-- Upcoming Appointments -->
+                <div id="upcoming-tab" class="tab-content active">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">Upcoming Appointments</h2>
+                        <div class="flex space-x-2">
+                            <button id="filterBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors">
+                                <i class="fas fa-filter mr-2"></i>Filter
+                            </button>
+                            <button id="sortBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors">
+                                <i class="fas fa-sort mr-2"></i>Sort
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="upcomingAppointments" class="space-y-4">
+                        <!-- Appointments will be loaded here -->
+                    </div>
+                </div>
+                
+                <!-- Past Appointments -->
+                <div id="past-tab" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">Past Appointments</h2>
+                        <div class="flex space-x-2">
+                            <button id="pastFilterBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors">
+                                <i class="fas fa-filter mr-2"></i>Filter
+                            </button>
+                            <button id="pastSortBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors">
+                                <i class="fas fa-sort mr-2"></i>Sort
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="pastAppointments" class="space-y-4">
+                        <!-- Past appointments will be loaded here -->
+                    </div>
+                </div>
+                
+                <!-- Book New Appointment -->
+                <div id="book-tab" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">Book New Appointment</h2>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <!-- Step 1: Select Doctor -->
+                        <div class="lg:col-span-1">
+                            <h3 class="font-bold text-gray-800 mb-4">Step 1: Select Doctor</h3>
+                            <div class="space-y-4 max-h-96 overflow-y-auto pr-2">
+                                <!-- Doctor cards will be loaded here -->
+                            </div>
+                        </div>
+                        
+                        <!-- Step 2: Select Date & Time -->
+                        <div class="lg:col-span-1">
+                            <h3 class="font-bold text-gray-800 mb-4">Step 2: Select Date & Time</h3>
+                            <div class="bg-white border border-gray-200 rounded-2xl p-4">
+                                <!-- Date Selection -->
+                                <div class="mb-6">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Select Date</label>
+                                    <input id="appointmentDate" type="date" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                
+                                <!-- Time Slots -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Available Time Slots</label>
+                                    <div id="timeSlots" class="grid grid-cols-3 gap-2">
+                                        <!-- Time slots will be loaded here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 3: Appointment Details -->
+                        <div class="lg:col-span-1">
+                            <h3 class="font-bold text-gray-800 mb-4">Step 3: Appointment Details</h3>
+                            <div class="bg-white border border-gray-200 rounded-2xl p-4">
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Appointment Type</label>
+                                    <div class="flex space-x-2">
+                                        <button id="inPersonBtn" class="flex-1 appointment-type-btn selected bg-blue-100 text-blue-700 border border-blue-300 py-2 rounded-lg font-medium">
+                                            In-person
+                                        </button>
+                                        <button id="videoBtn" class="flex-1 appointment-type-btn bg-gray-100 text-gray-700 border border-gray-300 py-2 rounded-lg font-medium">
+                                            Video Consult
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Reason for Visit</label>
+                                    <textarea id="visitReason" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" rows="3" placeholder="Describe your symptoms or reason for appointment"></textarea>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Insurance</label>
+                                    <select id="insuranceProvider" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="">Select Insurance Provider</option>
+                                        <option value="star">Star Health Insurance</option>
+                                        <option value="hdfc">HDFC ERGO</option>
+                                        <option value="icici">ICICI Lombard</option>
+                                        <option value="max">Max Bupa</option>
+                                        <option value="self">Self-pay</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="font-medium text-gray-700">Consultation Fee:</span>
+                                        <span id="consultationFee" class="font-bold text-lg text-primary">₹500</span>
+                                    </div>
+                                    <p class="text-sm text-gray-500">Payable at the time of appointment</p>
+                                </div>
+                                
+                                <button id="bookAppointmentBtn" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold transition-colors">
+                                    <i class="fas fa-calendar-check mr-2"></i>
+                                    Book Appointment (₹<span id="finalFee">500</span>)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="emergency-btn-fixed" id="globalEmergencyBtn" title="Emergency SOS">
+        <i class="fas fa-phone-alt"></i>
+        <span>SOS</span>
+    </button>
+
+    <!-- Emergency Modal -->
+    <div class="emergency-modal" id="emergencyModal">
+        <div class="emergency-modal-content">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Emergency SOS</h3>
+            <p class="text-gray-600 mb-6">Are you sure you want to trigger emergency alert? This will notify emergency services and your contacts.</p>
+            
+            <div class="flex space-x-3">
+                <button class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-3 rounded-lg font-semibold transition-colors" id="cancelEmergency">
+                    Cancel
+                </button>
+                <button class="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg font-semibold transition-colors" id="confirmEmergency">
+                    Confirm SOS
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sidebar Management
+        class SidebarManager {
+            constructor() {
+                this.init();
+            }
+
+            init() {
+                this.updateSidebarUserInfo();
+                this.setupEventListeners();
+            }
+
+            updateSidebarUserInfo() {
+                const profileData = this.loadProfileData();
+                const firstName = profileData.personal.firstName || 'Rajesh';
+                const lastName = profileData.personal.lastName || 'Sharma';
+                const fullName = `${firstName} ${lastName}`;
+                const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`;
+                const patientId = 'PM123456';
+                
+                const sidebarName = document.getElementById('sidebarName');
+                const sidebarInitials = document.getElementById('sidebarInitials');
+                const sidebarPatientId = document.getElementById('sidebarPatientId');
+                
+                if (sidebarName) sidebarName.textContent = fullName;
+                if (sidebarInitials) sidebarInitials.textContent = initials;
+                if (sidebarPatientId) sidebarPatientId.textContent = `Patient ID: ${patientId}`;
+                
+                const headerAvatar = document.getElementById('headerAvatar');
+                if (headerAvatar && !headerAvatar.style.backgroundImage) {
+                    headerAvatar.textContent = initials;
+                }
+            }
+
+            loadProfileData() {
+                const savedData = localStorage.getItem('fastMedicoProfile');
+                if (savedData) {
+                    return JSON.parse(savedData);
+                }
+                
+                const now = new Date().toISOString();
+                return {
+                    personal: {
+                        firstName: "Rajesh",
+                        lastName: "Sharma",
+                        dob: "1985-06-15",
+                        gender: "male",
+                        email: "rajesh.sharma@example.com",
+                        phone: "+91 98765 43210",
+                        address: "123 MG Road, Bengaluru",
+                        city: "Bengaluru",
+                        state: "Karnataka",
+                        zipCode: "560001",
+                        lastUpdated: now
+                    },
+                    health: {
+                        heartRate: "72",
+                        bloodPressure: "120/80",
+                        temperature: "98.6",
+                        oxygen: "98%",
+                        bloodType: "O+",
+                        allergies: "Dust, Pollen",
+                        medications: "None",
+                        conditions: "None",
+                        emergencyNotes: "No known drug allergies",
+                        insuranceProvider: "Star Health",
+                        policyNumber: "STAR-87452963",
+                        groupNumber: "GRP-5521",
+                        lastUpdated: now
+                    },
+                    emergencyContacts: [],
+                    settings: {},
+                    lastProfileUpdate: now
+                };
+            }
+
+            setupEventListeners() {
+                const sosButton = document.getElementById('sidebarEmergencyBtn');
+                if (sosButton) {
+                    sosButton.addEventListener('click', () => {
+                        const globalSosBtn = document.getElementById('globalEmergencyBtn');
+                        if (globalSosBtn) {
+                            globalSosBtn.click();
+                        }
+                    });
+                }
+            }
+
+            refreshSidebar() {
+                this.updateSidebarUserInfo();
+            }
+        }
+
+        // Appointment Management System
+        class AppointmentManager {
+            constructor() {
+                this.appointments = JSON.parse(localStorage.getItem('fastMedicoAppointments') || '[]');
+                this.doctors = this.getIndianDoctors();
+                this.selectedDoctor = null;
+                this.selectedTime = null;
+                this.selectedDate = null;
+                this.appointmentType = 'in-person';
+                this.consultationFee = 500; // Base fee
+                this.init();
+            }
+
+            getIndianDoctors() {
+                return [
+                    {
+                        id: 1,
+                        name: "Dr. Priya Sharma",
+                        specialization: "Cardiologist",
+                        hospital: "Apollo Hospitals, Delhi",
+                        rating: 4.7,
+                        reviews: 128,
+                        consultationFee: 800,
+                        availability: ["9:00 AM", "10:30 AM", "2:00 PM", "3:30 PM"]
+                    },
+                    {
+                        id: 2,
+                        name: "Dr. Arjun Patel",
+                        specialization: "Dermatologist",
+                        hospital: "Fortis Hospital, Mumbai",
+                        rating: 5.0,
+                        reviews: 94,
+                        consultationFee: 600,
+                        availability: ["10:00 AM", "11:30 AM", "4:00 PM", "5:30 PM"]
+                    },
+                    {
+                        id: 3,
+                        name: "Dr. Anjali Reddy",
+                        specialization: "Pediatrician",
+                        hospital: "Manipal Hospital, Bengaluru",
+                        rating: 5.0,
+                        reviews: 156,
+                        consultationFee: 500,
+                        availability: ["9:30 AM", "11:00 AM", "3:00 PM", "4:30 PM"]
+                    },
+                    {
+                        id: 4,
+                        name: "Dr. Rohan Kumar",
+                        specialization: "Orthopedic Surgeon",
+                        hospital: "Medanta Hospital, Gurgaon",
+                        rating: 4.8,
+                        reviews: 203,
+                        consultationFee: 1000,
+                        availability: ["10:00 AM", "12:00 PM", "5:00 PM", "6:30 PM"]
+                    },
+                    {
+                        id: 5,
+                        name: "Dr. Sneha Singh",
+                        specialization: "Gynecologist",
+                        hospital: "Artemis Hospital, Delhi",
+                        rating: 4.9,
+                        reviews: 178,
+                        consultationFee: 700,
+                        availability: ["9:00 AM", "11:00 AM", "2:30 PM", "4:00 PM"]
+                    },
+                    {
+                        id: 6,
+                        name: "Dr. Vikram Joshi",
+                        specialization: "Neurologist",
+                        hospital: "Kokilaben Hospital, Mumbai",
+                        rating: 4.7,
+                        reviews: 145,
+                        consultationFee: 900,
+                        availability: ["10:30 AM", "1:00 PM", "4:30 PM"]
+                    }
+                ];
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.loadDoctorCards();
+                this.loadAppointments();
+                this.setDefaultDate();
+            }
+
+            setupEventListeners() {
+                // Tab switching
+                document.querySelectorAll('.appointment-tab').forEach(tab => {
+                    tab.addEventListener('click', (e) => {
+                        const targetTab = e.target.getAttribute('data-tab');
+                        document.querySelectorAll('.appointment-tab').forEach(t => t.classList.remove('active'));
+                        document.querySelectorAll('.tab-content').forEach(c => {
+                            c.classList.remove('active');
+                            c.classList.add('hidden');
+                        });
+                        
+                        e.target.classList.add('active');
+                        document.getElementById(`${targetTab}-tab`).classList.remove('hidden');
+                        document.getElementById(`${targetTab}-tab`).classList.add('active');
+                    });
+                });
+
+                // Appointment type selection
+                document.getElementById('inPersonBtn').addEventListener('click', () => {
+                    this.selectAppointmentType('in-person');
+                });
+                
+                document.getElementById('videoBtn').addEventListener('click', () => {
+                    this.selectAppointmentType('video');
+                });
+
+                // Date change
+                document.getElementById('appointmentDate').addEventListener('change', (e) => {
+                    this.selectedDate = e.target.value;
+                    this.updateTimeSlots();
+                });
+
+                // Book appointment button
+                document.getElementById('bookAppointmentBtn').addEventListener('click', () => {
+                    this.bookAppointment();
+                });
+
+                // Filter buttons
+                document.getElementById('filterBtn').addEventListener('click', () => this.filterAppointments());
+                document.getElementById('sortBtn').addEventListener('click', () => this.sortAppointments());
+                document.getElementById('pastFilterBtn').addEventListener('click', () => this.filterPastAppointments());
+                document.getElementById('pastSortBtn').addEventListener('click', () => this.sortPastAppointments());
+
+                // Insurance provider change
+                document.getElementById('insuranceProvider').addEventListener('change', (e) => {
+                    this.updateConsultationFee();
+                });
+            }
+
+            loadDoctorCards() {
+                const doctorContainer = document.querySelector('.lg\\:col-span-1 .space-y-4');
+                doctorContainer.innerHTML = this.doctors.map(doctor => `
+                    <div class="doctor-card bg-white border border-gray-200 rounded-2xl p-4" data-doctor-id="${doctor.id}">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 ${this.getDoctorColor(doctor.specialization)} rounded-xl flex items-center justify-center">
+                                <i class="fas fa-user-md ${this.getDoctorIconColor(doctor.specialization)}"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="font-semibold text-gray-800">${doctor.name}</h4>
+                                <p class="text-sm text-gray-600">${doctor.specialization}</p>
+                                <div class="flex items-center justify-between mt-1">
+                                    <div class="flex items-center">
+                                        <span class="text-yellow-400 text-sm">
+                                            ${this.getStarRating(doctor.rating)}
+                                        </span>
+                                        <span class="text-xs text-gray-500 ml-1">${doctor.rating} (${doctor.reviews} reviews)</span>
+                                    </div>
+                                    <span class="font-bold text-primary">₹${doctor.consultationFee}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Add click event to doctor cards
+                document.querySelectorAll('.doctor-card').forEach(card => {
+                    card.addEventListener('click', (e) => {
+                        const doctorId = parseInt(e.currentTarget.getAttribute('data-doctor-id'));
+                        this.selectDoctor(doctorId);
+                    });
+                });
+            }
+
+            selectDoctor(doctorId) {
+                this.selectedDoctor = this.doctors.find(d => d.id === doctorId);
+                
+                // Remove selection from all cards
+                document.querySelectorAll('.doctor-card').forEach(card => card.classList.remove('selected'));
+                
+                // Add selection to clicked card
+                document.querySelector(`[data-doctor-id="${doctorId}"]`).classList.add('selected');
+                
+                // Update consultation fee
+                this.consultationFee = this.selectedDoctor.consultationFee;
+                this.updateConsultationFee();
+                
+                // Update time slots
+                this.updateTimeSlots();
+                
+                this.showNotification(`Selected: ${this.selectedDoctor.name}`, 'info');
+            }
+
+            updateTimeSlots() {
+                const timeSlotsContainer = document.getElementById('timeSlots');
+                if (!this.selectedDoctor) {
+                    timeSlotsContainer.innerHTML = '<p class="text-gray-500 text-center col-span-3">Please select a doctor first</p>';
+                    return;
+                }
+
+                timeSlotsContainer.innerHTML = this.selectedDoctor.availability.map(time => `
+                    <div class="time-slot border border-gray-300 rounded-lg p-3 text-center text-sm font-medium" data-time="${time}">
+                        ${time}
+                    </div>
+                `).join('');
+
+                // Add click event to time slots
+                document.querySelectorAll('.time-slot').forEach(slot => {
+                    slot.addEventListener('click', (e) => {
+                        this.selectedTime = e.target.getAttribute('data-time');
+                        document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
+                        e.target.classList.add('selected');
+                    });
+                });
+            }
+
+            selectAppointmentType(type) {
+                this.appointmentType = type;
+                const inPersonBtn = document.getElementById('inPersonBtn');
+                const videoBtn = document.getElementById('videoBtn');
+                
+                if (type === 'in-person') {
+                    inPersonBtn.classList.add('selected', 'bg-blue-100', 'text-blue-700', 'border-blue-300');
+                    videoBtn.classList.remove('selected', 'bg-blue-100', 'text-blue-700', 'border-blue-300');
+                    videoBtn.classList.add('bg-gray-100', 'text-gray-700', 'border-gray-300');
+                } else {
+                    videoBtn.classList.add('selected', 'bg-blue-100', 'text-blue-700', 'border-blue-300');
+                    inPersonBtn.classList.remove('selected', 'bg-blue-100', 'text-blue-700', 'border-blue-300');
+                    inPersonBtn.classList.add('bg-gray-100', 'text-gray-700', 'border-gray-300');
+                    // Video consultation might have different fee
+                    this.updateConsultationFee();
+                }
+            }
+
+            updateConsultationFee() {
+                let fee = this.selectedDoctor ? this.selectedDoctor.consultationFee : 500;
+                const insurance = document.getElementById('insuranceProvider').value;
+                
+                // Apply insurance discounts
+                if (insurance === 'star') {
+                    fee *= 0.8; // 20% discount
+                } else if (insurance === 'hdfc') {
+                    fee *= 0.85; // 15% discount
+                } else if (insurance === 'icici') {
+                    fee *= 0.9; // 10% discount
+                }
+                
+                // Video consultation discount
+                if (this.appointmentType === 'video') {
+                    fee *= 0.7; // 30% discount for video
+                }
+                
+                this.consultationFee = Math.round(fee);
+                document.getElementById('consultationFee').textContent = `₹${this.consultationFee}`;
+                document.getElementById('finalFee').textContent = this.consultationFee;
+            }
+
+            bookAppointment() {
+                if (!this.selectedDoctor) {
+                    this.showNotification('Please select a doctor', 'error');
+                    return;
+                }
+
+                if (!this.selectedDate) {
+                    this.showNotification('Please select a date', 'error');
+                    return;
+                }
+
+                if (!this.selectedTime) {
+                    this.showNotification('Please select a time slot', 'error');
+                    return;
+                }
+
+                const visitReason = document.getElementById('visitReason').value.trim();
+                if (!visitReason) {
+                    this.showNotification('Please describe the reason for visit', 'error');
+                    return;
+                }
+
+                const insurance = document.getElementById('insuranceProvider').value;
+                const appointmentId = 'APT-' + Date.now().toString().slice(-6);
+                
+                const appointment = {
+                    id: appointmentId,
+                    doctorId: this.selectedDoctor.id,
+                    doctorName: this.selectedDoctor.name,
+                    specialization: this.selectedDoctor.specialization,
+                    hospital: this.selectedDoctor.hospital,
+                    date: this.selectedDate,
+                    time: this.selectedTime,
+                    type: this.appointmentType,
+                    reason: visitReason,
+                    insurance: insurance,
+                    fee: this.consultationFee,
+                    status: 'confirmed',
+                    bookedAt: new Date().toISOString()
+                };
+
+                // Add to appointments
+                this.appointments.push(appointment);
+                localStorage.setItem('fastMedicoAppointments', JSON.stringify(this.appointments));
+
+                // Reset form
+                this.resetBookingForm();
+
+                // Show success message
+                this.showNotification(`Appointment booked successfully! ID: ${appointmentId}`, 'success');
+
+                // Switch to upcoming tab
+                document.querySelector('[data-tab="upcoming"]').click();
+                this.loadAppointments();
+            }
+
+            resetBookingForm() {
+                this.selectedDoctor = null;
+                this.selectedTime = null;
+                this.selectedDate = null;
+                this.appointmentType = 'in-person';
+                
+                document.querySelectorAll('.doctor-card').forEach(card => card.classList.remove('selected'));
+                document.querySelectorAll('.time-slot').forEach(slot => slot.classList.remove('selected'));
+                document.getElementById('visitReason').value = '';
+                document.getElementById('insuranceProvider').selectedIndex = 0;
+                document.getElementById('appointmentDate').value = '';
+                
+                this.selectAppointmentType('in-person');
+                this.updateConsultationFee();
+                this.setDefaultDate();
+            }
+
+            setDefaultDate() {
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                const formattedDate = tomorrow.toISOString().split('T')[0];
+                document.getElementById('appointmentDate').value = formattedDate;
+                this.selectedDate = formattedDate;
+            }
+
+            loadAppointments() {
+                this.loadUpcomingAppointments();
+                this.loadPastAppointments();
+            }
+
+            loadUpcomingAppointments() {
+                const container = document.getElementById('upcomingAppointments');
+                const upcoming = this.appointments.filter(apt => 
+                    new Date(apt.date) >= new Date(new Date().toISOString().split('T')[0])
+                );
+
+                if (upcoming.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-12 text-gray-500">
+                            <i class="fas fa-calendar-times text-4xl mb-4"></i>
+                            <p>No upcoming appointments</p>
+                            <p class="text-sm">Book your first appointment to see it here.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = upcoming.map(apt => `
+                    <div class="bg-white border border-gray-200 rounded-2xl p-6 card-hover">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-16 h-16 ${this.getDoctorColor(apt.specialization)} rounded-2xl flex items-center justify-center">
+                                    <i class="fas fa-user-md ${this.getDoctorIconColor(apt.specialization)} text-2xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-gray-800">${apt.doctorName}</h3>
+                                    <p class="text-gray-600">${apt.specialization} • ${apt.hospital}</p>
+                                    <div class="flex items-center space-x-4 mt-2">
+                                        <span class="flex items-center text-sm text-gray-500">
+                                            <i class="fas fa-calendar-day mr-1"></i>
+                                            ${new Date(apt.date).toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}, ${apt.time}
+                                        </span>
+                                        <span class="flex items-center text-sm text-gray-500">
+                                            <i class="fas fa-clock mr-1"></i>
+                                            ${apt.type === 'video' ? 'Video Consult' : 'In-person'}
+                                        </span>
+                                        <span class="flex items-center text-sm text-gray-500">
+                                            <i class="fas fa-rupee-sign mr-1"></i>
+                                            ₹${apt.fee}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex flex-col items-end space-y-2">
+                                <span class="bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full font-semibold">${apt.status.charAt(0).toUpperCase() + apt.status.slice(1)}</span>
+                                <div class="flex space-x-2">
+                                    ${apt.type === 'video' ? `
+                                    <button class="join-video-btn bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm" data-id="${apt.id}">
+                                        <i class="fas fa-video mr-1"></i>Join
+                                    </button>
+                                    ` : ''}
+                                    <button class="reschedule-btn bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors text-sm" data-id="${apt.id}">
+                                        Reschedule
+                                    </button>
+                                    <button class="cancel-btn bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-lg font-medium transition-colors text-sm" data-id="${apt.id}">
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Add event listeners to buttons
+                document.querySelectorAll('.join-video-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = e.target.getAttribute('data-id');
+                        this.joinVideoConsult(id);
+                    });
+                });
+
+                document.querySelectorAll('.reschedule-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = e.target.getAttribute('data-id');
+                        this.rescheduleAppointment(id);
+                    });
+                });
+
+                document.querySelectorAll('.cancel-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = e.target.getAttribute('data-id');
+                        this.cancelAppointment(id);
+                    });
+                });
+            }
+
+            loadPastAppointments() {
+                const container = document.getElementById('pastAppointments');
+                const past = this.appointments.filter(apt => 
+                    new Date(apt.date) < new Date(new Date().toISOString().split('T')[0])
+                );
+
+                if (past.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-12 text-gray-500">
+                            <i class="fas fa-history text-4xl mb-4"></i>
+                            <p>No past appointments</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = past.slice(0, 5).map(apt => `
+                    <div class="bg-white border border-gray-200 rounded-2xl p-6">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center">
+                                    <i class="fas fa-user-md text-gray-600 text-2xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-gray-800">${apt.doctorName}</h3>
+                                    <p class="text-gray-600">${apt.specialization} • ${apt.hospital}</p>
+                                    <div class="flex items-center space-x-4 mt-2">
+                                        <span class="flex items-center text-sm text-gray-500">
+                                            <i class="fas fa-calendar-day mr-1"></i>
+                                            ${new Date(apt.date).toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}, ${apt.time}
+                                        </span>
+                                        <span class="flex items-center text-sm text-gray-500">
+                                            <i class="fas fa-rupee-sign mr-1"></i>
+                                            ₹${apt.fee}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex flex-col items-end space-y-2">
+                                <span class="bg-gray-100 text-gray-800 text-xs px-3 py-1 rounded-full font-semibold">Completed</span>
+                                <div class="flex space-x-2">
+                                    <button class="view-summary-btn bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm" data-id="${apt.id}">
+                                        View Summary
+                                    </button>
+                                    <button class="book-again-btn bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors text-sm" data-id="${apt.id}">
+                                        Book Again
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Add event listeners
+                document.querySelectorAll('.view-summary-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = e.target.getAttribute('data-id');
+                        this.viewAppointmentSummary(id);
+                    });
+                });
+
+                document.querySelectorAll('.book-again-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = e.target.getAttribute('data-id');
+                        this.bookAgain(id);
+                    });
+                });
+            }
+
+            joinVideoConsult(appointmentId) {
+                const apt = this.appointments.find(a => a.id === appointmentId);
+                if (apt) {
+                    this.showNotification(`Joining video consultation with ${apt.doctorName}...`, 'info');
+                    setTimeout(() => {
+                        window.open('video consult.html', '_blank');
+                    }, 1000);
+                }
+            }
+
+            rescheduleAppointment(appointmentId) {
+                const apt = this.appointments.find(a => a.id === appointmentId);
+                if (apt) {
+                    // Switch to booking tab
+                    document.querySelector('[data-tab="book"]').click();
+                    
+                    // Find and select the same doctor
+                    const doctor = this.doctors.find(d => d.name === apt.doctorName);
+                    if (doctor) {
+                        this.selectDoctor(doctor.id);
+                    }
+                    
+                    // Set the appointment type
+                    this.selectAppointmentType(apt.type);
+                    
+                    // Set the reason
+                    document.getElementById('visitReason').value = apt.reason;
+                    
+                    this.showNotification('Please select new date and time for rescheduling', 'info');
+                }
+            }
+
+            cancelAppointment(appointmentId) {
+                if (confirm('Are you sure you want to cancel this appointment? A cancellation fee may apply.')) {
+                    const index = this.appointments.findIndex(a => a.id === appointmentId);
+                    if (index !== -1) {
+                        this.appointments[index].status = 'cancelled';
+                        localStorage.setItem('fastMedicoAppointments', JSON.stringify(this.appointments));
+                        this.showNotification('Appointment cancelled successfully', 'success');
+                        this.loadAppointments();
+                    }
+                }
+            }
+
+            viewAppointmentSummary(appointmentId) {
+                const apt = this.appointments.find(a => a.id === appointmentId);
+                if (apt) {
+                    const summary = `
+Appointment Summary
+─────────────────
+Appointment ID: ${apt.id}
+Doctor: ${apt.doctorName}
+Specialization: ${apt.specialization}
+Hospital: ${apt.hospital}
+Date: ${new Date(apt.date).toLocaleDateString('en-IN')}
+Time: ${apt.time}
+Type: ${apt.type === 'video' ? 'Video Consultation' : 'In-person'}
+Reason: ${apt.reason}
+Insurance: ${this.getInsuranceName(apt.insurance)}
+Fee Paid: ₹${apt.fee}
+Status: ${apt.status.toUpperCase()}
+                    `;
+                    alert(summary);
+                }
+            }
+
+            bookAgain(appointmentId) {
+                const apt = this.appointments.find(a => a.id === appointmentId);
+                if (apt) {
+                    // Switch to booking tab
+                    document.querySelector('[data-tab="book"]').click();
+                    
+                    // Find and select the same doctor
+                    const doctor = this.doctors.find(d => d.name === apt.doctorName);
+                    if (doctor) {
+                        this.selectDoctor(doctor.id);
+                    }
+                    
+                    this.showNotification('Doctor selected. Please choose date and time.', 'info');
+                }
+            }
+
+            filterAppointments() {
+                const filter = prompt('Filter by (doctor/specialization/type):').toLowerCase();
+                if (filter) {
+                    const filtered = this.appointments.filter(apt => 
+                        apt.doctorName.toLowerCase().includes(filter) ||
+                        apt.specialization.toLowerCase().includes(filter) ||
+                        apt.type.includes(filter)
+                    );
+                    this.showNotification(`Found ${filtered.length} appointments matching "${filter}"`, 'info');
+                }
+            }
+
+            sortAppointments() {
+                const sortBy = prompt('Sort by (date/fee/doctor):').toLowerCase();
+                if (sortBy === 'date') {
+                    this.appointments.sort((a, b) => new Date(a.date) - new Date(b.date));
+                } else if (sortBy === 'fee') {
+                    this.appointments.sort((a, b) => a.fee - b.fee);
+                } else if (sortBy === 'doctor') {
+                    this.appointments.sort((a, b) => a.doctorName.localeCompare(b.doctorName));
+                }
+                localStorage.setItem('fastMedicoAppointments', JSON.stringify(this.appointments));
+                this.loadAppointments();
+                this.showNotification(`Sorted appointments by ${sortBy}`, 'success');
+            }
+
+            filterPastAppointments() {
+                this.showNotification('Filtering past appointments...', 'info');
+            }
+
+            sortPastAppointments() {
+                this.showNotification('Sorting past appointments...', 'info');
+            }
+
+            getDoctorColor(specialization) {
+                const colors = {
+                    'Cardiologist': 'bg-red-100',
+                    'Dermatologist': 'bg-green-100',
+                    'Pediatrician': 'bg-purple-100',
+                    'Orthopedic Surgeon': 'bg-orange-100',
+                    'Gynecologist': 'bg-pink-100',
+                    'Neurologist': 'bg-indigo-100'
+                };
+                return colors[specialization] || 'bg-blue-100';
+            }
+
+            getDoctorIconColor(specialization) {
+                const colors = {
+                    'Cardiologist': 'text-red-600',
+                    'Dermatologist': 'text-green-600',
+                    'Pediatrician': 'text-purple-600',
+                    'Orthopedic Surgeon': 'text-orange-600',
+                    'Gynecologist': 'text-pink-600',
+                    'Neurologist': 'text-indigo-600'
+                };
+                return colors[specialization] || 'text-blue-600';
+            }
+
+            getStarRating(rating) {
+                let stars = '';
+                const fullStars = Math.floor(rating);
+                const halfStar = rating % 1 >= 0.5;
+                
+                for (let i = 0; i < fullStars; i++) {
+                    stars += '<i class="fas fa-star"></i>';
+                }
+                if (halfStar) {
+                    stars += '<i class="fas fa-star-half-alt"></i>';
+                }
+                const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
+                for (let i = 0; i < emptyStars; i++) {
+                    stars += '<i class="far fa-star"></i>';
+                }
+                return stars;
+            }
+
+            getInsuranceName(code) {
+                const names = {
+                    'star': 'Star Health Insurance',
+                    'hdfc': 'HDFC ERGO',
+                    'icici': 'ICICI Lombard',
+                    'max': 'Max Bupa',
+                    'self': 'Self-pay'
+                };
+                return names[code] || code;
+            }
+
+            showNotification(message, type = 'success') {
+                const notification = document.createElement('div');
+                notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50 ${
+                    type === 'error' ? 'bg-red-500' : type === 'info' ? 'bg-blue-500' : 'bg-green-500'
+                } text-white`;
+                notification.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <i class="fas ${type === 'error' ? 'fa-exclamation-triangle' : type === 'info' ? 'fa-info-circle' : 'fa-check-circle'}"></i>
+                        <span>${message}</span>
+                    </div>
+                `;
+                document.body.appendChild(notification);
+                
+                setTimeout(() => notification.classList.remove('translate-x-full'), 100);
+                setTimeout(() => {
+                    notification.classList.add('translate-x-full');
+                    setTimeout(() => document.body.removeChild(notification), 300);
+                }, 3000);
+            }
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Sidebar Manager
+            window.sidebarManager = new SidebarManager();
+            
+            // Initialize Appointment Manager
+            window.appointmentManager = new AppointmentManager();
+            
+            // Add staggered animation delays
+            const animateElements = document.querySelectorAll('.animate-scale-in, .animate-slide-in');
+            animateElements.forEach((el, index) => {
+                el.style.animationDelay = `${index * 0.1}s`;
+            });
+
+            // Global Emergency Button Functionality
+            const emergencyBtn = document.getElementById('globalEmergencyBtn');
+            const emergencyModal = document.getElementById('emergencyModal');
+            const confirmEmergency = document.getElementById('confirmEmergency');
+            const cancelEmergency = document.getElementById('cancelEmergency');
+
+            emergencyBtn.addEventListener('click', () => emergencyModal.style.display = 'flex');
+            confirmEmergency.addEventListener('click', () => {
+                triggerEmergencyAlert();
+                emergencyModal.style.display = 'none';
+            });
+            cancelEmergency.addEventListener('click', () => emergencyModal.style.display = 'none');
+            emergencyModal.addEventListener('click', (e) => {
+                if (e.target === emergencyModal) emergencyModal.style.display = 'none';
+            });
+
+            function triggerEmergencyAlert() {
+                const btn = emergencyBtn;
+                const originalHTML = btn.innerHTML;
+                btn.classList.add('alerting');
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>ALERTING...</span>';
+                
+                setTimeout(() => {
+                    showEmergencyNotification('Emergency services alerted! Help is on the way.');
+                    setTimeout(() => {
+                        btn.classList.remove('alerting');
+                        btn.innerHTML = originalHTML;
+                    }, 5000);
+                }, 3000);
+            }
+
+            function showEmergencyNotification(message) {
+                const notification = document.createElement('div');
+                notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-4 rounded-lg shadow-lg z-1002 animate-pulse';
+                notification.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-ambulance text-xl"></i>
+                        <div>
+                            <h4 class="font-bold">EMERGENCY ALERT</h4>
+                            <p class="text-sm">${message}</p>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(notification);
+                setTimeout(() => notification.remove(), 5000);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FastMedico - Medical Records</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2563eb',
+                        'primary-dark': '#1d4ed8',
+                        secondary: '#10b981',
+                        accent: '#8b5cf6',
+                    },
+                    animation: {
+                        'slide-in': 'slideIn 0.6s ease-out',
+                        'fade-in': 'fadeIn 0.8s ease-out',
+                        'scale-in': 'scaleIn 0.5s ease-out',
+                        'pulse-gentle': 'pulseGentle 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        slideIn: {
+                            '0%': { opacity: '0', transform: 'translateX(-20px)' },
+                            '100%': { opacity: '1', transform: 'translateX(0)' }
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' }
+                        },
+                        scaleIn: {
+                            '0%': { opacity: '0', transform: 'scale(0.9)' },
+                            '100%': { opacity: '1', transform: 'scale(1)' }
+                        },
+                        pulseGentle: {
+                            '0%, 100%': { opacity: '1' },
+                            '50%': { opacity: '0.8' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+        }
+        
+        .sidebar {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        }
+        
+        .nav-item {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+        
+        .nav-item.active {
+            background: rgba(37, 99, 235, 0.2);
+            border-left: 4px solid #2563eb;
+        }
+        
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .quick-action {
+            transition: all 0.3s ease;
+        }
+        
+        .quick-action:hover {
+            transform: scale(1.05);
+        }
+        
+        .sos-pulse {
+            animation: sosPulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes sosPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+        }
+        
+        .notification-badge {
+            animation: bounce 2s ease-in-out infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .records-tab {
+            transition: all 0.3s ease;
+        }
+        
+        .records-tab.active {
+            background: #2563eb;
+            color: white;
+        }
+        
+        .record-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .status-normal {
+            background: #dcfce7;
+            color: #166534;
+        }
+        
+        .status-abnormal {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+        
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-completed {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .health-metric {
+            transition: all 0.3s ease;
+        }
+        
+        .health-metric:hover {
+            transform: scale(1.02);
+        }
+        
+        .timeline-item {
+            position: relative;
+            padding-left: 2rem;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e5e7eb;
+        }
+        
+        .timeline-item:last-child::before {
+            bottom: 50%;
+        }
+        
+        .timeline-dot {
+            position: absolute;
+            left: -6px;
+            top: 0.5rem;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #2563eb;
+            border: 2px solid white;
+        }
+        
+        .chart-container {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 1rem;
+        }
+        
+        .file-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .file-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .expandable-section {
+            transition: all 0.3s ease;
+            max-height: 0;
+            overflow: hidden;
+        }
+        
+        .expandable-section.expanded {
+            max-height: 1000px;
+        }
+        .emergency-btn-fixed {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, #dc2626, #ef4444);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    animation: emergencyPulse 2s infinite;
+}
+
+.emergency-btn-fixed:hover {
+    transform: scale(1.1);
+    box-shadow: 0 12px 35px rgba(220, 38, 38, 0.6);
+}
+
+.emergency-btn-fixed i {
+    font-size: 20px;
+    margin-bottom: 2px;
+}
+
+.emergency-btn-fixed.alerting {
+    animation: emergencyAlert 0.5s infinite alternate;
+    background: linear-gradient(135deg, #991b1b, #dc2626);
+}
+
+@keyframes emergencyPulse {
+    0%, 100% { 
+        transform: scale(1);
+        box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
+    }
+    50% { 
+        transform: scale(1.05);
+        box-shadow: 0 8px 30px rgba(220, 38, 38, 0.6);
+    }
+}
+
+@keyframes emergencyAlert {
+    0% { 
+        background: linear-gradient(135deg, #dc2626, #ef4444);
+        transform: scale(1);
+    }
+    100% { 
+        background: linear-gradient(135deg, #991b1b, #dc2626);
+        transform: scale(1.1);
+    }
+}
+
+/* Emergency Modal */
+.emergency-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1001;
+    align-items: center;
+    justify-content: center;
+}
+
+.emergency-modal-content {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+    </style>
+</head>
+<body class="min-h-screen flex">
+  <!-- Sidebar -->
+    <div class="sidebar w-64 min-h-screen text-white p-6 flex flex-col">
+        <!-- Logo -->
+        <div class="flex items-center space-x-3 mb-8">
+            <i class="fas fa-heartbeat text-2xl text-blue-400"></i>
+            <h1 class="text-xl font-bold">Fast<span class="text-blue-400">Medico</span></h1>
+        </div>
+
+        <!-- User Profile -->
+        <div class="flex items-center space-x-3 mb-8 p-4 bg-white/10 rounded-xl animate-scale-in">
+            <div id="sidebarInitials" class="w-12 h-12 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center">
+                <span class="text-white font-semibold">JS</span>
+                </div>
+                <div>
+                <h3 id="sidebarName" class="font-semibold">John Smith</h3>
+                <p id="sidebarPatientId" class="text-sm text-gray-300">Patient ID: PM123456</p>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="space-y-2 flex-1">
+            <a href="Dashboard.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-home w-5"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="My Profile.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-user-circle w-5"></i>
+                <span>My Profile</span>
+            </a>
+            <a href="hospitals.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-hospital w-5"></i>
+                <span>Hospitals</span>
+            </a>
+            <a href="Appointments.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-calendar-check w-5"></i>
+                <span>Appointments</span>
+            </a>
+            <a href="Prescriptions.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-prescription w-5"></i>
+                <span>Prescriptions</span>
+            </a>
+            <a href="Medical Records.html" class="nav-item active flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-file-medical w-5"></i>
+                <span>Medical Records</span>
+            </a>
+            <a href="Ambulance Services.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-ambulance w-5"></i>
+                <span>Ambulance</span>
+            </a>
+            <a href="Medicines.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-pills w-5"></i>
+                <span>Medicines</span>
+            </a>
+            <a href="Doctors.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-user-md w-5"></i>
+                <span>Doctors</span>
+            </a>
+            <a href="Blood Bank.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-tint w-5"></i>
+                <span>Blood Bank</span>
+            </a>
+            <a href="video consult.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-video w-5"></i>
+                <span>Video Consult</span>
+            </a>
+            <a href="Ai Diagnosis.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-robot w-5"></i>
+                <span>AI Diagnosis</span>
+            </a>
+        </nav>
+
+        <!-- Emergency SOS Button -->
+        <div class="mt-auto">
+            <button id="sidebarEmergencyBtn" class="w-full bg-red-500 hover:bg-red-600 text-white py-4 rounded-xl font-bold transition-all duration-300 sos-pulse">
+                EMERGENCY SOS
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 p-8 overflow-auto">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800 animate-slide-in">Medical Records</h1>
+                <p class="text-gray-600 animate-slide-in" style="animation-delay: 0.1s">Your complete health history and medical documents</p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <!-- Notifications -->
+                <div class="relative">
+                    <i class="fas fa-bell text-2xl text-gray-600 cursor-pointer hover:text-primary transition-colors"></i>
+                    <span class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full notification-badge"></span>
+                </div>
+                
+                <!-- User Avatar -->
+                <div id="headerAvatar" class="w-10 h-10 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center text-white font-semibold cursor-pointer hover:scale-110 transition-transform">
+                     JS
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 card-hover animate-scale-in">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Lab Reports</p>
+                        <h3 class="text-2xl font-bold text-gray-800 mt-2">24</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-flask text-blue-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 card-hover animate-scale-in" style="animation-delay: 0.1s">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Diagnoses</p>
+                        <h3 class="text-2xl font-bold text-gray-800 mt-2">8</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-stethoscope text-green-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 card-hover animate-scale-in" style="animation-delay: 0.2s">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Medical Images</p>
+                        <h3 class="text-2xl font-bold text-gray-800 mt-2">15</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-x-ray text-purple-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 card-hover animate-scale-in" style="animation-delay: 0.3s">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Vaccinations</p>
+                        <h3 class="text-2xl font-bold text-gray-800 mt-2">12</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-syringe text-orange-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Medical Records Tabs -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 mb-8">
+            <div class="flex border-b border-gray-200 overflow-x-auto">
+                <button class="records-tab active flex-1 py-4 px-6 text-center font-semibold rounded-tl-2xl whitespace-nowrap" data-tab="overview">
+                    <i class="fas fa-chart-line mr-2"></i>Health Overview
+                </button>
+                <button class="records-tab flex-1 py-4 px-6 text-center font-semibold whitespace-nowrap" data-tab="lab">
+                    <i class="fas fa-flask mr-2"></i>Lab Results
+                </button>
+                <button class="records-tab flex-1 py-4 px-6 text-center font-semibold whitespace-nowrap" data-tab="diagnosis">
+                    <i class="fas fa-stethoscope mr-2"></i>Diagnoses
+                </button>
+                <button class="records-tab flex-1 py-4 px-6 text-center font-semibold whitespace-nowrap" data-tab="imaging">
+                    <i class="fas fa-x-ray mr-2"></i>Medical Imaging
+                </button>
+                <button class="records-tab flex-1 py-4 px-6 text-center font-semibold rounded-tr-2xl whitespace-nowrap" data-tab="vaccination">
+                    <i class="fas fa-syringe mr-2"></i>Vaccinations
+                </button>
+            </div>
+            
+            <!-- Tab Content -->
+            <div class="p-6">
+                <!-- Health Overview -->
+                <div id="overview-tab" class="tab-content active">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">Health Overview</h2>
+                        <div class="flex space-x-2">
+                            <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors">
+                                <i class="fas fa-download mr-2"></i>Export
+                            </button>
+                            <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors">
+                                <i class="fas fa-print mr-2"></i>Print
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+                        <!-- Health Metrics -->
+                        <div class="lg:col-span-2">
+                            <h3 class="font-bold text-gray-800 mb-4">Key Health Metrics</h3>
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                <div class="health-metric bg-white border border-gray-200 rounded-2xl p-4 text-center">
+                                    <div class="text-2xl font-bold text-blue-600 mb-1">72</div>
+                                    <div class="text-sm text-gray-600">Heart Rate</div>
+                                    <div class="text-xs text-green-600 mt-1">Normal</div>
+                                </div>
+                                <div class="health-metric bg-white border border-gray-200 rounded-2xl p-4 text-center">
+                                    <div class="text-2xl font-bold text-blue-600 mb-1">120/80</div>
+                                    <div class="text-sm text-gray-600">Blood Pressure</div>
+                                    <div class="text-xs text-green-600 mt-1">Normal</div>
+                                </div>
+                                <div class="health-metric bg-white border border-gray-200 rounded-2xl p-4 text-center">
+                                    <div class="text-2xl font-bold text-blue-600 mb-1">98.6°F</div>
+                                    <div class="text-sm text-gray-600">Temperature</div>
+                                    <div class="text-xs text-green-600 mt-1">Normal</div>
+                                </div>
+                                <div class="health-metric bg-white border border-gray-200 rounded-2xl p-4 text-center">
+                                    <div class="text-2xl font-bold text-blue-600 mb-1">98%</div>
+                                    <div class="text-sm text-gray-600">Oxygen Level</div>
+                                    <div class="text-xs text-green-600 mt-1">Normal</div>
+                                </div>
+                                <div class="health-metric bg-white border border-gray-200 rounded-2xl p-4 text-center">
+                                    <div class="text-2xl font-bold text-blue-600 mb-1">5.8%</div>
+                                    <div class="text-sm text-gray-600">A1C Level</div>
+                                    <div class="text-xs text-yellow-600 mt-1">Borderline</div>
+                                </div>
+                                <div class="health-metric bg-white border border-gray-200 rounded-2xl p-4 text-center">
+                                    <div class="text-2xl font-bold text-blue-600 mb-1">185</div>
+                                    <div class="text-sm text-gray-600">Cholesterol</div>
+                                    <div class="text-xs text-red-600 mt-1">High</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Health Timeline -->
+                        <div class="lg:col-span-1">
+                            <h3 class="font-bold text-gray-800 mb-4">Recent Activity</h3>
+                            <div class="space-y-4">
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="bg-gray-50 rounded-xl p-4">
+                                        <p class="font-semibold text-gray-800">Blood Test Completed</p>
+                                        <p class="text-sm text-gray-600">Dec 18, 2023</p>
+                                        <span class="record-status status-completed mt-2 inline-block">Normal Results</span>
+                                    </div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="bg-gray-50 rounded-xl p-4">
+                                        <p class="font-semibold text-gray-800">Cardiology Consultation</p>
+                                        <p class="text-sm text-gray-600">Dec 15, 2023</p>
+                                        <span class="record-status status-normal mt-2 inline-block">Stable Condition</span>
+                                    </div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="bg-gray-50 rounded-xl p-4">
+                                        <p class="font-semibold text-gray-800">X-Ray Taken</p>
+                                        <p class="text-sm text-gray-600">Dec 10, 2023</p>
+                                        <span class="record-status status-normal mt-2 inline-block">No Issues Found</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Health Trends -->
+                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-2xl p-6 mb-8">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-lg">Blood Pressure Trends</h3>
+                            <select class="bg-white/20 text-white border-none rounded-lg px-3 py-1">
+                                <option>Last 30 Days</option>
+                                <option>Last 3 Months</option>
+                                <option>Last Year</option>
+                            </select>
+                        </div>
+                        <div class="h-48 flex items-end justify-between space-x-2">
+                            <!-- Simplified chart bars -->
+                            <div class="flex-1 bg-white/30 rounded-t-lg" style="height: 60%"></div>
+                            <div class="flex-1 bg-white/40 rounded-t-lg" style="height: 70%"></div>
+                            <div class="flex-1 bg-white/30 rounded-t-lg" style="height: 65%"></div>
+                            <div class="flex-1 bg-white/50 rounded-t-lg" style="height: 80%"></div>
+                            <div class="flex-1 bg-white/40 rounded-t-lg" style="height: 75%"></div>
+                            <div class="flex-1 bg-white/30 rounded-t-lg" style="height: 70%"></div>
+                            <div class="flex-1 bg-white/20 rounded-t-lg" style="height: 55%"></div>
+                        </div>
+                        <div class="flex justify-between text-blue-100 text-sm mt-2">
+                            <span>Mon</span>
+                            <span>Tue</span>
+                            <span>Wed</span>
+                            <span>Thu</span>
+                            <span>Fri</span>
+                            <span>Sat</span>
+                            <span>Sun</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Lab Results -->
+                <div id="lab-tab" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">Laboratory Results</h2>
+                        <div class="flex space-x-2">
+                            <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors">
+                                <i class="fas fa-filter mr-2"></i>Filter
+                            </button>
+                            <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                                <i class="fas fa-plus mr-2"></i>Upload Results
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <!-- Lab Result Card 1 -->
+                        <div class="bg-white border border-gray-200 rounded-2xl p-6 card-hover">
+                            <div class="flex items-start justify-between">
+                                <div class="flex items-start space-x-4">
+                                    <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center">
+                                        <i class="fas fa-flask text-blue-600 text-2xl"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="flex items-start justify-between">
+                                            <div>
+                                                <h3 class="font-bold text-gray-800 text-lg">Complete Blood Count (CBC)</h3>
+                                                <p class="text-gray-600">Routine blood test</p>
+                                            </div>
+                                            <span class="record-status status-normal">Normal</span>
+                                        </div>
+                                        
+                                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                                            <div>
+                                                <p class="text-sm text-gray-500">Test Date</p>
+                                                <p class="font-semibold">Dec 18, 2023</p>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm text-gray-500">Ordered By</p>
+                                                <p class="font-semibold">Dr. Sarah Wilson</p>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm text-gray-500">Lab</p>
+                                                <p class="font-semibold">City Medical Lab</p>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm text-gray-500">Status</p>
+                                                <p class="font-semibold">Completed</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mt-4">
+                                            <button class="text-blue-500 hover:text-blue-600 font-medium flex items-center">
+                                                <i class="fas fa-chevron-down mr-2"></i>
+                                                View Detailed Results
+                                            </button>
+                                            <div class="expandable-section mt-2">
+                                                <div class="bg-gray-50 rounded-xl p-4">
+                                                    <table class="w-full text-sm">
+                                                        <thead>
+                                                            <tr class="border-b">
+                                                                <th class="text-left py-2">Test</th>
+                                                                <th class="text-left py-2">Result</th>
+                                                                <th class="text-left py-2">Reference Range</th>
+                                                                <th class="text-left py-2">Status</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr class="border-b">
+                                                                <td class="py-2">White Blood Cells</td>
+                                                                <td class="py-2">7.2</td>
+                                                                <td class="py-2">4.5-11.0</td>
+                                                                <td class="py-2"><span class="record-status status-normal">Normal</span></td>
+                                                            </tr>
+                                                            <tr class="border-b">
+                                                                <td class="py-2">Hemoglobin</td>
+                                                                <td class="py-2">14.2</td>
+                                                                <td class="py-2">13.5-17.5</td>
+                                                                <td class="py-2"><span class="record-status status-normal">Normal</span></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="py-2">Platelets</td>
+                                                                <td class="py-2">250</td>
+                                                                <td class="py-2">150-450</td>
+                                                                <td class="py-2"><span class="record-status status-normal">Normal</span></td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex justify-end space-x-3 mt-4">
+                                <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                                    <i class="fas fa-download mr-2"></i>Download PDF
+                                </button>
+                                <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors">
+                                    <i class="fas fa-share mr-2"></i>Share
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Lab Result Card 2 -->
+                        <div class="bg-white border border-gray-200 rounded-2xl p-6 card-hover">
+                            <div class="flex items-start justify-between">
+                                <div class="flex items-start space-x-4">
+                                    <div class="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center">
+                                        <i class="fas fa-flask text-red-600 text-2xl"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="flex items-start justify-between">
+                                            <div>
+                                                <h3 class="font-bold text-gray-800 text-lg">Lipid Panel</h3>
+                                                <p class="text-gray-600">Cholesterol test</p>
+                                            </div>
+                                            <span class="record-status status-abnormal">Abnormal</span>
+                                        </div>
+                                        
+                                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                                            <div>
+                                                <p class="text-sm text-gray-500">Test Date</p>
+                                                <p class="font-semibold">Dec 10, 2023</p>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm text-gray-500">Ordered By</p>
+                                                <p class="font-semibold">Dr. Sarah Wilson</p>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm text-gray-500">Lab</p>
+                                                <p class="font-semibold">Wellness Diagnostics</p>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm text-gray-500">Status</p>
+                                                <p class="font-semibold">Reviewed</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mt-4">
+                                            <div class="bg-red-50 border border-red-200 rounded-xl p-4">
+                                                <p class="text-red-800 text-sm">
+                                                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                                                    High cholesterol levels detected. Please consult with your doctor.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex justify-end space-x-3 mt-4">
+                                <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                                    <i class="fas fa-download mr-2"></i>Download PDF
+                                </button>
+                                <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors">
+                                    <i class="fas fa-share mr-2"></i>Share
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Diagnoses -->
+                <div id="diagnosis-tab" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">Medical Diagnoses</h2>
+                        <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors">
+                            <i class="fas fa-history mr-2"></i>View History
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Diagnosis Card 1 -->
+                        <div class="bg-white border border-gray-200 rounded-2xl p-6 card-hover">
+                            <div class="flex items-start justify-between mb-4">
+                                <h3 class="font-bold text-gray-800 text-lg">Hypertension</h3>
+                                <span class="record-status status-normal">Managed</span>
+                            </div>
+                            <div class="space-y-3">
+                                <div>
+                                    <p class="text-sm text-gray-500">Diagnosed</p>
+                                    <p class="font-semibold">March 15, 2022</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Diagnosed By</p>
+                                    <p class="font-semibold">Dr. Sarah Wilson</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Status</p>
+                                    <p class="font-semibold">Chronic Condition</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Last Reviewed</p>
+                                    <p class="font-semibold">Dec 15, 2023</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Diagnosis Card 2 -->
+                        <div class="bg-white border border-gray-200 rounded-2xl p-6 card-hover">
+                            <div class="flex items-start justify-between mb-4">
+                                <h3 class="font-bold text-gray-800 text-lg">Type 2 Diabetes</h3>
+                                <span class="record-status status-normal">Controlled</span>
+                            </div>
+                            <div class="space-y-3">
+                                <div>
+                                    <p class="text-sm text-gray-500">Diagnosed</p>
+                                    <p class="font-semibold">October 8, 2021</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Diagnosed By</p>
+                                    <p class="font-semibold">Dr. Michael Chen</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Status</p>
+                                    <p class="font-semibold">Chronic Condition</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Last Reviewed</p>
+                                    <p class="font-semibold">Nov 20, 2023</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Diagnosis Card 3 -->
+                        <div class="bg-white border border-gray-200 rounded-2xl p-6 card-hover">
+                            <div class="flex items-start justify-between mb-4">
+                                <h3 class="font-bold text-gray-800 text-lg">Hyperlipidemia</h3>
+                                <span class="record-status status-abnormal">Active</span>
+                            </div>
+                            <div class="space-y-3">
+                                <div>
+                                    <p class="text-sm text-gray-500">Diagnosed</p>
+                                    <p class="font-semibold">December 10, 2023</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Diagnosed By</p>
+                                    <p class="font-semibold">Dr. Sarah Wilson</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Status</p>
+                                    <p class="font-semibold">New Diagnosis</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Last Reviewed</p>
+                                    <p class="font-semibold">Dec 10, 2023</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Diagnosis Card 4 -->
+                        <div class="bg-white border border-gray-200 rounded-2xl p-6 card-hover">
+                            <div class="flex items-start justify-between mb-4">
+                                <h3 class="font-bold text-gray-800 text-lg">Seasonal Allergies</h3>
+                                <span class="record-status status-normal">Resolved</span>
+                            </div>
+                            <div class="space-y-3">
+                                <div>
+                                    <p class="text-sm text-gray-500">Diagnosed</p>
+                                    <p class="font-semibold">April 5, 2023</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Diagnosed By</p>
+                                    <p class="font-semibold">Dr. Emily Rodriguez</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Status</p>
+                                    <p class="font-semibold">Seasonal</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Last Reviewed</p>
+                                    <p class="font-semibold">June 15, 2023</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Medical Imaging -->
+                <div id="imaging-tab" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">Medical Imaging</h2>
+                        <div class="flex space-x-2">
+                            <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors">
+                                <i class="fas fa-filter mr-2"></i>Filter
+                            </button>
+                            <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                                <i class="fas fa-upload mr-2"></i>Upload Images
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Imaging Card 1 -->
+                        <div class="file-card bg-white border border-gray-200 rounded-2xl p-4">
+                            <div class="w-full h-40 bg-gray-100 rounded-xl mb-4 flex items-center justify-center">
+                                <i class="fas fa-x-ray text-gray-400 text-4xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-800 mb-2">Chest X-Ray</h3>
+                                <p class="text-sm text-gray-600 mb-2">Routine chest examination</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs text-gray-500">Dec 10, 2023</span>
+                                    <span class="record-status status-normal">Normal</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Imaging Card 2 -->
+                        <div class="file-card bg-white border border-gray-200 rounded-2xl p-4">
+                            <div class="w-full h-40 bg-gray-100 rounded-xl mb-4 flex items-center justify-center">
+                                <i class="fas fa-brain text-gray-400 text-4xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-800 mb-2">Head CT Scan</h3>
+                                <p class="text-sm text-gray-600 mb-2">Neurological assessment</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs text-gray-500">Nov 25, 2023</span>
+                                    <span class="record-status status-normal">Normal</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Imaging Card 3 -->
+                        <div class="file-card bg-white border border-gray-200 rounded-2xl p-4">
+                            <div class="w-full h-40 bg-gray-100 rounded-xl mb-4 flex items-center justify-center">
+                                <i class="fas fa-heart text-gray-400 text-4xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-800 mb-2">Cardiac MRI</h3>
+                                <p class="text-sm text-gray-600 mb-2">Heart function analysis</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs text-gray-500">Nov 15, 2023</span>
+                                    <span class="record-status status-normal">Normal</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Vaccinations -->
+                <div id="vaccination-tab" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">Vaccination Records</h2>
+                        <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                            <i class="fas fa-plus mr-2"></i>Add Record
+                        </button>
+                    </div>
+                    
+                    <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="text-left py-4 px-6 font-semibold text-gray-700">Vaccine</th>
+                                    <th class="text-left py-4 px-6 font-semibold text-gray-700">Date</th>
+                                    <th class="text-left py-4 px-6 font-semibold text-gray-700">Provider</th>
+                                    <th class="text-left py-4 px-6 font-semibold text-gray-700">Next Due</th>
+                                    <th class="text-left py-4 px-6 font-semibold text-gray-700">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <tr>
+                                    <td class="py-4 px-6">
+                                        <div class="font-semibold text-gray-800">COVID-19 Booster</div>
+                                        <div class="text-sm text-gray-600">Moderna</div>
+                                    </td>
+                                    <td class="py-4 px-6">Oct 15, 2023</td>
+                                    <td class="py-4 px-6">City Health Clinic</td>
+                                    <td class="py-4 px-6">Oct 15, 2024</td>
+                                    <td class="py-4 px-6"><span class="record-status status-completed">Completed</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="py-4 px-6">
+                                        <div class="font-semibold text-gray-800">Influenza Vaccine</div>
+                                        <div class="text-sm text-gray-600">Seasonal</div>
+                                    </td>
+                                    <td class="py-4 px-6">Sep 20, 2023</td>
+                                    <td class="py-4 px-6">Wellness Pharmacy</td>
+                                    <td class="py-4 px-6">Sep 20, 2024</td>
+                                    <td class="py-4 px-6"><span class="record-status status-completed">Completed</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="py-4 px-6">
+                                        <div class="font-semibold text-gray-800">Tetanus Booster</div>
+                                        <div class="text-sm text-gray-600">Tdap</div>
+                                    </td>
+                                    <td class="py-4 px-6">Jun 10, 2022</td>
+                                    <td class="py-4 px-6">Family Health Center</td>
+                                    <td class="py-4 px-6">Jun 10, 2032</td>
+                                    <td class="py-4 px-6"><span class="record-status status-completed">Completed</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="py-4 px-6">
+                                        <div class="font-semibold text-gray-800">Pneumococcal</div>
+                                        <div class="text-sm text-gray-600">PPSV23</div>
+                                    </td>
+                                    <td class="py-4 px-6">Mar 5, 2023</td>
+                                    <td class="py-4 px-6">City Health Clinic</td>
+                                    <td class="py-4 px-6">Mar 5, 2028</td>
+                                    <td class="py-4 px-6"><span class="record-status status-completed">Completed</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="emergency-btn-fixed" id="globalEmergencyBtn" title="Emergency SOS">
+    <i class="fas fa-phone-alt"></i>
+    <span>SOS</span>
+</button>
+
+<!-- Emergency Modal -->
+<div class="emergency-modal" id="emergencyModal">
+    <div class="emergency-modal-content">
+        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+        </div>
+        <h3 class="text-xl font-bold text-gray-800 mb-2">Emergency SOS</h3>
+        <p class="text-gray-600 mb-6">Are you sure you want to trigger emergency alert? This will notify emergency services and your contacts.</p>
+        
+        <div class="flex space-x-3">
+            <button class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-3 rounded-lg font-semibold transition-colors" id="cancelEmergency">
+                Cancel
+            </button>
+            <button class="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg font-semibold transition-colors" id="confirmEmergency">
+                Confirm SOS
+            </button>
+        </div>
+    </div>
+</div>
+    <script src="sidebar.js"></script>
+    <script>
+        // Tab functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tab switching
+            const tabs = document.querySelectorAll('.records-tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const targetTab = this.getAttribute('data-tab');
+                    
+                    // Update active tab
+                    tabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Show target tab content
+                    tabContents.forEach(content => {
+                        content.classList.remove('active');
+                        content.classList.add('hidden');
+                    });
+                    
+                    document.getElementById(`${targetTab}-tab`).classList.remove('hidden');
+                    document.getElementById(`${targetTab}-tab`).classList.add('active');
+                });
+            });
+            
+            // Expandable sections
+            const expandButtons = document.querySelectorAll('.text-blue-500');
+            expandButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const section = this.nextElementSibling;
+                    section.classList.toggle('expanded');
+                    
+                    const icon = this.querySelector('i');
+                    if (section.classList.contains('expanded')) {
+                        icon.className = 'fas fa-chevron-up mr-2';
+                    } else {
+                        icon.className = 'fas fa-chevron-down mr-2';
+                    }
+                });
+            });
+            
+            // File card clicks
+            const fileCards = document.querySelectorAll('.file-card');
+            fileCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    showNotification('Opening medical image viewer...');
+                });
+            });
+            
+            // Navigation active state
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    if (this.getAttribute('href') === '#') {
+                        e.preventDefault();
+                    }
+                    navItems.forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Add click animation
+                    this.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        this.style.transform = '';
+                    }, 150);
+                });
+            });
+
+            // Emergency SOS button
+            const sosButton = document.querySelector('.sos-pulse');
+            sosButton.addEventListener('click', function() {
+                // Confirm emergency
+                if (confirm('Are you sure you want to trigger emergency SOS? This will alert emergency services and your contacts.')) {
+                    this.innerHTML = '<i class="fas fa-phone-alt mr-2"></i> ALERTING EMERGENCY...';
+                    this.style.background = '#dc2626';
+                    
+                    // Simulate emergency call
+                    setTimeout(() => {
+                        showNotification('Emergency services alerted! Help is on the way. Your location has been shared.');
+                        this.innerHTML = '<i class="fas fa-phone-alt mr-2"></i> EMERGENCY SOS';
+                        this.style.background = '';
+                    }, 3000);
+                }
+            });
+
+            // Add staggered animation delays
+            const animateElements = document.querySelectorAll('.animate-scale-in, .animate-slide-in');
+            animateElements.forEach((el, index) => {
+                el.style.animationDelay = `${index * 0.1}s`;
+            });
+        });
+
+        // Notification function
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50';
+            notification.innerHTML = `
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-check-circle"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.remove('translate-x-full');
+            }, 100);
+            
+            setTimeout(() => {
+                notification.classList.add('translate-x-full');
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+        // Global Emergency Button Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const emergencyBtn = document.getElementById('globalEmergencyBtn');
+    const emergencyModal = document.getElementById('emergencyModal');
+    const confirmEmergency = document.getElementById('confirmEmergency');
+    const cancelEmergency = document.getElementById('cancelEmergency');
+
+    // Open emergency modal
+    emergencyBtn.addEventListener('click', function() {
+        emergencyModal.style.display = 'flex';
+    });
+
+    // Confirm emergency
+    confirmEmergency.addEventListener('click', function() {
+        triggerEmergencyAlert();
+        emergencyModal.style.display = 'none';
+    });
+
+    // Cancel emergency
+    cancelEmergency.addEventListener('click', function() {
+        emergencyModal.style.display = 'none';
+    });
+
+    // Close modal when clicking outside
+    emergencyModal.addEventListener('click', function(e) {
+        if (e.target === emergencyModal) {
+            emergencyModal.style.display = 'none';
+        }
+    });
+
+    function triggerEmergencyAlert() {
+        const btn = emergencyBtn;
+        const originalHTML = btn.innerHTML;
+        
+        // Visual feedback
+        btn.classList.add('alerting');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>ALERTING...</span>';
+        
+        // Simulate emergency process
+        setTimeout(() => {
+            showEmergencyNotification('Emergency services alerted! Help is on the way.');
+            
+            // Reset button after 5 seconds
+            setTimeout(() => {
+                btn.classList.remove('alerting');
+                btn.innerHTML = originalHTML;
+            }, 5000);
+            
+        }, 3000);
+
+        // Here you would typically:
+        // 1. Send emergency request to your backend
+        // 2. Notify emergency contacts
+        // 3. Share location data
+        // 4. Connect to emergency services
+    }
+
+    function showEmergencyNotification(message) {
+        // Create notification
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-4 rounded-lg shadow-lg z-1002 animate-pulse';
+        notification.innerHTML = `
+            <div class="flex items-center space-x-3">
+                <i class="fas fa-ambulance text-xl"></i>
+                <div>
+                    <h4 class="font-bold">EMERGENCY ALERT</h4>
+                    <p class="text-sm">${message}</p>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Remove notification after 5 seconds
+        setTimeout(() => {
+            notification.remove();
+        }, 5000);
+    }
+});
+    </script>
+</body>
+</html>

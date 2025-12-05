@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FastMedico - Blood Bank</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2563eb',
+                        'primary-dark': '#1d4ed8',
+                        secondary: '#10b981',
+                        accent: '#8b5cf6',
+                    },
+                    animation: {
+                        'slide-in': 'slideIn 0.6s ease-out',
+                        'fade-in': 'fadeIn 0.8s ease-out',
+                        'scale-in': 'scaleIn 0.5s ease-out',
+                        'pulse-gentle': 'pulseGentle 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        slideIn: {
+                            '0%': { opacity: '0', transform: 'translateX(-20px)' },
+                            '100%': { opacity: '1', transform: 'translateX(0)' }
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' }
+                        },
+                        scaleIn: {
+                            '0%': { opacity: '0', transform: 'scale(0.9)' },
+                            '100%': { opacity: '1', transform: 'scale(1)' }
+                        },
+                        pulseGentle: {
+                            '0%, 100%': { opacity: '1' },
+                            '50%': { opacity: '0.8' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+        }
+        
+        .sidebar {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        }
+        
+        .nav-item {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+        
+        .nav-item.active {
+            background: rgba(37, 99, 235, 0.2);
+            border-left: 4px solid #2563eb;
+        }
+        
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .quick-action {
+            transition: all 0.3s ease;
+        }
+        
+        .quick-action:hover {
+            transform: scale(1.05);
+        }
+        
+        .sos-pulse {
+            animation: sosPulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes sosPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+        }
+        
+        .notification-badge {
+            animation: bounce 2s ease-in-out infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .blood-tab {
+            transition: all 0.3s ease;
+        }
+        
+        .blood-tab.active {
+            background: #2563eb;
+            color: white;
+        }
+        
+        .blood-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .status-critical {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+        
+        .status-low {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-adequate {
+            background: #dcfce7;
+            color: #166534;
+        }
+        
+        .status-urgent {
+            background: #fef2f2;
+            color: #dc2626;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .request-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-approved {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .status-fulfilled {
+            background: #dcfce7;
+            color: #166534;
+        }
+        
+        .status-cancelled {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+        
+        .blood-group {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.25rem;
+            color: white;
+        }
+        
+        .blood-group-aplus {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+        
+        .blood-group-bplus {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+        }
+        
+        .blood-group-abplus {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        }
+        
+        .blood-group-oplus {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+        
+        .blood-group-aminus {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+        
+        .blood-group-bminus {
+            background: linear-gradient(135deg, #ec4899, #db2777);
+        }
+        
+        .blood-group-abminus {
+            background: linear-gradient(135deg, #06b6d4, #0891b2);
+        }
+        
+        .blood-group-ominus {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+        }
+        
+        .donation-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .donation-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .urgency-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: #ef4444;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            animation: pulse 2s infinite;
+        }
+        
+        .inventory-bar {
+            height: 8px;
+            border-radius: 4px;
+            background: #e5e7eb;
+            overflow: hidden;
+        }
+        
+        .inventory-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        .inventory-critical {
+            background: #ef4444;
+        }
+        
+        .inventory-low {
+            background: #f59e0b;
+        }
+        
+        .inventory-adequate {
+            background: #10b981;
+        }
+        
+        .donor-badge {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #ef4444;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        
+        .compatibility-table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        
+        .compatibility-table th,
+        .compatibility-table td {
+            border: 1px solid #e5e7eb;
+            padding: 8px;
+            text-align: center;
+        }
+        
+        .compatibility-table th {
+            background: #f8fafc;
+            font-weight: 600;
+        }
+        
+        .compatible-yes {
+            background: #dcfce7;
+            color: #166534;
+        }
+        
+        .compatible-no {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+        .emergency-btn-fixed {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, #dc2626, #ef4444);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    animation: emergencyPulse 2s infinite;
+}
+
+.emergency-btn-fixed:hover {
+    transform: scale(1.1);
+    box-shadow: 0 12px 35px rgba(220, 38, 38, 0.6);
+}
+
+.emergency-btn-fixed i {
+    font-size: 20px;
+    margin-bottom: 2px;
+}
+
+.emergency-btn-fixed.alerting {
+    animation: emergencyAlert 0.5s infinite alternate;
+    background: linear-gradient(135deg, #991b1b, #dc2626);
+}
+
+@keyframes emergencyPulse {
+    0%, 100% { 
+        transform: scale(1);
+        box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
+    }
+    50% { 
+        transform: scale(1.05);
+        box-shadow: 0 8px 30px rgba(220, 38, 38, 0.6);
+    }
+}
+
+@keyframes emergencyAlert {
+    0% { 
+        background: linear-gradient(135deg, #dc2626, #ef4444);
+        transform: scale(1);
+    }
+    100% { 
+        background: linear-gradient(135deg, #991b1b, #dc2626);
+        transform: scale(1.1);
+    }
+}
+
+/* Emergency Modal */
+.emergency-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1001;
+    align-items: center;
+    justify-content: center;
+}
+
+.emergency-modal-content {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+    </style>
+</head>
+<body class="min-h-screen flex">
+    <!-- Sidebar -->
+    <div class="sidebar w-64 min-h-screen text-white p-6 flex flex-col">
+        <!-- Logo -->
+        <div class="flex items-center space-x-3 mb-8 animate-slide-in">
+            <i class="fas fa-heartbeat text-2xl text-primary"></i>
+            <h1 class="text-xl font-bold">Fast<span class="text-primary">Medico</span></h1>
+        </div>
+
+        <!-- User Profile -->
+        <div class="flex items-center space-x-3 mb-8 p-4 bg-white/10 rounded-xl animate-scale-in">
+            <div id="sidebarInitials" class="w-12 h-12 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center">
+                <span class="text-white font-semibold">JS</span>
+                </div>
+                <div>
+                <h3 id="sidebarName" class="font-semibold">John Smith</h3>
+                <p id="sidebarPatientId" class="text-sm text-gray-300">Patient ID: PM123456</p>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="space-y-2 flex-1">
+            <a href="Dashboard.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-home w-5"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="My Profile.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-user-circle w-5"></i>
+                <span>My Profile</span>
+            </a>
+            <a href="Appointments.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-calendar-check w-5"></i>
+                <span>Appointments</span>
+            </a>
+            <a href="Prescriptions.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-prescription w-5"></i>
+                <span>Prescriptions</span>
+            </a>
+            <a href="Medical Records.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-file-medical w-5"></i>
+                <span>Medical Records</span>
+            </a>
+            <a href="Ambulance Services.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-ambulance w-5"></i>
+                <span>Ambulance</span>
+            </a>
+            <a href="Medicines.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-pills w-5"></i>
+                <span>Medicines</span>
+            </a>
+            <a href="hospitals.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-hospital w-5"></i>
+                <span>Hospitals</span>
+            </a>
+            <a href="Doctors.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-user-md w-5"></i>
+                <span>Doctors</span>
+            </a>
+            <a href="Blood Bank.html" class="nav-item active flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-tint w-5"></i>
+                <span>Blood Bank</span>
+            </a>
+            <a href="video consult.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-video w-5"></i>
+                <span>Video Consult</span>
+            </a>
+            <a href="Ai Diagnosis.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-robot w-5"></i>
+                <span>AI Diagnosis</span>
+            </a>
+        </nav>
+
+        <!-- Emergency SOS Button -->
+        <div class="mt-auto">
+            <button id="sidebarEmergencyBtn" class="w-full bg-red-500 hover:bg-red-600 text-white py-4 rounded-xl font-bold transition-all duration-300 sos-pulse">
+                EMERGENCY SOS
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 p-8 overflow-auto">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800 animate-slide-in">Blood Bank</h1>
+                <p class="text-gray-600 animate-slide-in" style="animation-delay: 0.1s">Donate blood and save lives</p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <!-- Donor Badge -->
+                <div class="flex items-center space-x-2 bg-red-50 px-3 py-2 rounded-lg">
+                    <div class="donor-badge">
+                        <i class="fas fa-tint"></i>
+                    </div>
+                    <span class="text-red-700 font-semibold">Universal Donor</span>
+                </div>
+                
+                <!-- Notifications -->
+                <div class="relative">
+                    <i class="fas fa-bell text-2xl text-gray-600 cursor-pointer hover:text-primary transition-colors"></i>
+                    <span class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full notification-badge"></span>
+                </div>
+                
+                <!-- User Avatar -->
+                <div id="headerAvatar" class="w-10 h-10 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center text-white font-semibold cursor-pointer hover:scale-110 transition-transform">
+                     JS
+                </div>
+            </div>
+        </div>
+
+        <!-- Emergency Alert Banner -->
+        <div class="bg-red-50 border border-red-200 rounded-2xl p-4 mb-8 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-exclamation-triangle text-red-600"></i>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-red-800">Urgent Blood Need</h3>
+                    <p class="text-red-600 text-sm">O- blood type is critically low. Emergency donations needed.</p>
+                </div>
+            </div>
+            <button class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors">
+                Donate Now
+            </button>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 card-hover animate-scale-in">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Total Donations</p>
+                        <h3 class="text-2xl font-bold text-gray-800 mt-2">8</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-tint text-red-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 card-hover animate-scale-in" style="animation-delay: 0.1s">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Lives Saved</p>
+                        <h3 class="text-2xl font-bold text-gray-800 mt-2">24</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-heart text-green-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 card-hover animate-scale-in" style="animation-delay: 0.2s">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Next Donation</p>
+                        <h3 class="text-2xl font-bold text-gray-800 mt-2">Mar 15</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-calendar text-blue-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 card-hover animate-scale-in" style="animation-delay: 0.3s">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Blood Points</p>
+                        <h3 class="text-2xl font-bold text-gray-800 mt-2">850</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-award text-purple-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Blood Bank Tabs -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 mb-8">
+            <div class="flex border-b border-gray-200 overflow-x-auto">
+                <button class="blood-tab active flex-1 py-4 px-6 text-center font-semibold rounded-tl-2xl whitespace-nowrap" data-tab="inventory">
+                    <i class="fas fa-boxes mr-2"></i>Blood Inventory
+                </button>
+                <button class="blood-tab flex-1 py-4 px-6 text-center font-semibold whitespace-nowrap" data-tab="request">
+                    <i class="fas fa-hand-holding-medical mr-2"></i>Request Blood
+                </button>
+                <button class="blood-tab flex-1 py-4 px-6 text-center font-semibold whitespace-nowrap" data-tab="donate">
+                    <i class="fas fa-hand-holding-heart mr-2"></i>Donate Blood
+                </button>
+                <button class="blood-tab flex-1 py-4 px-6 text-center font-semibold rounded-tr-2xl whitespace-nowrap" data-tab="history">
+                    <i class="fas fa-history mr-2"></i>My History
+                </button>
+            </div>
+            
+            <!-- Tab Content -->
+            <div class="p-6">
+                <!-- Blood Inventory -->
+                <div id="inventory-tab" class="tab-content active">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">Blood Inventory Status</h2>
+                        <div class="flex space-x-2">
+                            <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors">
+                                <i class="fas fa-sync-alt mr-2"></i>Refresh
+                            </button>
+                            <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                                <i class="fas fa-download mr-2"></i>Export Report
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Blood Group Grid -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+                        <!-- Blood Group A+ -->
+                        <div class="bg-white border border-gray-200 rounded-2xl p-6 card-hover">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="blood-group blood-group-aplus">A+</div>
+                                <span class="blood-status status-adequate">Adequate</span>
+                            </div>
+                            <h3 class="font-bold text-gray-800 mb-2">Type A Positive</h3>
+                            <p class="text-sm text-gray-600 mb-3">Universal Plasma Donor</p>
+                            <div class="inventory-bar mb-2">
+                                <div class="inventory-fill inventory-adequate" style="width: 75%"></div>
+                            </div>
+                            <div class="flex justify-between text-sm text-gray-600">
+                                <span>Available: 42 units</span>
+                                <span>Capacity: 56 units</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Blood Group B+ -->
+                        <div class="bg-white border border-gray-200 rounded-2xl p-6 card-hover">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="blood-group blood-group-bplus">B+</div>
+                                <span class="blood-status status-low">Low</span>
+                            </div>
+                            <h3 class="font-bold text-gray-800 mb-2">Type B Positive</h3>
+                            <p class="text-sm text-gray-600 mb-3">B+ and AB+ recipients</p>
+                            <div class="inventory-bar mb-2">
+                                <div class="inventory-fill inventory-low" style="width: 35%"></div>
+                            </div>
+                            <div class="flex justify-between text-sm text-gray-600">
+                                <span>Available: 19 units</span>
+                                <span>Capacity: 56 units</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Blood Group O+ -->
+                        <div class="bg-white border border-gray-200 rounded-2xl p-6 card-hover">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="blood-group blood-group-oplus">O+</div>
+                                <span class="blood-status status-adequate">Adequate</span>
+                            </div>
+                            <h3 class="font-bold text-gray-800 mb-2">Type O Positive</h3>
+                            <p class="text-sm text-gray-600 mb-3">Most common blood type</p>
+                            <div class="inventory-bar mb-2">
+                                <div class="inventory-fill inventory-adequate" style="width: 68%"></div>
+                            </div>
+                            <div class="flex justify-between text-sm text-gray-600">
+                                <span>Available: 38 units</span>
+                                <span>Capacity: 56 units</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Blood Group O- -->
+                        <div class="bg-white border border-gray-200 rounded-2xl p-6 card-hover relative">
+                            <div class="urgency-badge">URGENT</div>
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="blood-group blood-group-ominus">O-</div>
+                                <span class="blood-status status-urgent">Critical</span>
+                            </div>
+                            <h3 class="font-bold text-gray-800 mb-2">Type O Negative</h3>
+                            <p class="text-sm text-gray-600 mb-3">Universal Donor</p>
+                            <div class="inventory-bar mb-2">
+                                <div class="inventory-fill inventory-critical" style="width: 15%"></div>
+                            </div>
+                            <div class="flex justify-between text-sm text-gray-600">
+                                <span>Available: 8 units</span>
+                                <span>Capacity: 56 units</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Additional Blood Groups -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                        <!-- Blood Group AB+ -->
+                        <div class="bg-white border border-gray-200 rounded-2xl p-6 card-hover">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="blood-group blood-group-abplus">AB+</div>
+                                <span class="blood-status status-adequate">Adequate</span>
+                            </div>
+                            <h3 class="font-bold text-gray-800 mb-2">Type AB Positive</h3>
+                            <p class="text-sm text-gray-600 mb-3">Universal Recipient</p>
+                            <div class="inventory-bar mb-2">
+                                <div class="inventory-fill inventory-adequate" style="width: 60%"></div>
+                            </div>
+                            <div class="flex justify-between text-sm text-gray-600">
+                                <span>Available: 34 units</span>
+                                <span>Capacity: 56 units</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Blood Group A- -->
+                        <div class="bg-white border border-gray-200 rounded-2xl p-6 card-hover">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="blood-group blood-group-aminus">A-</div>
+                                <span class="blood-status status-low">Low</span>
+                            </div>
+                            <h3 class="font-bold text-gray-800 mb-2">Type A Negative</h3>
+                            <p class="text-sm text-gray-600 mb-3">A- and AB- recipients</p>
+                            <div class="inventory-bar mb-2">
+                                <div class="inventory-fill inventory-low" style="width: 28%"></div>
+                            </div>
+                            <div class="flex justify-between text-sm text-gray-600">
+                                <span>Available: 16 units</span>
+                                <span>Capacity: 56 units</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Blood Group B- -->
+                        <div class="bg-white border border-gray-200 rounded-2xl p-6 card-hover">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="blood-group blood-group-bminus">B-</div>
+                                <span class="blood-status status-adequate">Adequate</span>
+                            </div>
+                            <h3 class="font-bold text-gray-800 mb-2">Type B Negative</h3>
+                            <p class="text-sm text-gray-600 mb-3">B- and AB- recipients</p>
+                            <div class="inventory-bar mb-2">
+                                <div class="inventory-fill inventory-adequate" style="width: 55%"></div>
+                            </div>
+                            <div class="flex justify-between text-sm text-gray-600">
+                                <span>Available: 31 units</span>
+                                <span>Capacity: 56 units</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Blood Group AB- -->
+                        <div class="bg-white border border-gray-200 rounded-2xl p-6 card-hover">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="blood-group blood-group-abminus">AB-</div>
+                                <span class="blood-status status-critical">Critical</span>
+                            </div>
+                            <h3 class="font-bold text-gray-800 mb-2">Type AB Negative</h3>
+                            <p class="text-sm text-gray-600 mb-3">Rarest blood type</p>
+                            <div class="inventory-bar mb-2">
+                                <div class="inventory-fill inventory-critical" style="width: 20%"></div>
+                            </div>
+                            <div class="flex justify-between text-sm text-gray-600">
+                                <span>Available: 11 units</span>
+                                <span>Capacity: 56 units</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Blood Compatibility Chart -->
+                    <div class="mt-8">
+                        <h3 class="font-bold text-gray-800 mb-4">Blood Type Compatibility</h3>
+                        <div class="bg-white border border-gray-200 rounded-2xl p-6">
+                            <div class="overflow-x-auto">
+                                <table class="compatibility-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Donor →<br>Recipient ↓</th>
+                                            <th>O-</th>
+                                            <th>O+</th>
+                                            <th>A-</th>
+                                            <th>A+</th>
+                                            <th>B-</th>
+                                            <th>B+</th>
+                                            <th>AB-</th>
+                                            <th>AB+</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <th>O-</th>
+                                            <td class="compatible-yes">✓</td>
+                                            <td class="compatible-no">✗</td>
+                                            <td class="compatible-no">✗</td>
+                                            <td class="compatible-no">✗</td>
+                                            <td class="compatible-no">✗</td>
+                                            <td class="compatible-no">✗</td>
+                                            <td class="compatible-no">✗</td>
+                                            <td class="compatible-no">✗</td>
+                                        </tr>
+                                        <tr>
+                                            <th>O+</th>
+                                            <td class="compatible-yes">✓</td>
+                                            <td class="compatible-yes">✓</td>
+                                            <td class="compatible-no">✗</td>
+                                            <td class="compatible-no">✗</td>
+                                            <td class="compatible-no">✗</td>
+                                            <td class="compatible-no">✗</td>
+                                            <td class="compatible-no">✗</td>
+                                            <td class="compatible-no">✗</td>
+                                        </tr>
+                                        <tr>
+                                            <th>A-</th>
+                                            <td class="compatible-yes">✓</td>
+                                            <td class="compatible-no">✗</td>
+                                            <td class="compatible-yes">✓</td>
+                                            <td class="compatible-no">✗</td>
+                                            <td class="compatible-no">✗</td>
+                                            <td class="compatible-no">✗</td>
+                                            <td class="compatible-no">✗</td>
+                                            <td class="compatible-no">✗</td>
+                                        </tr>
+                                        <tr>
+                                            <th>A+</th>
+                                            <td class="compatible-yes">✓</td>
+                                            <td class="compatible-yes">✓</td>
+                                            <td class="compatible-yes">✓</td>
+                                            <td class="compatible-yes">✓</td>
+                                            <td class="compatible-no">✗</td>
+                                            <td class="compatible-no">✗</td>
+                                            <td class="compatible-no">✗</td>
+                                            <td class="compatible-no">✗</td>
+                                        </tr>
+                                        <tr>
+                                            <th>B-</th>
+                                            <td class="compatible-yes">✓</td>
+                                            <td class="compatible-no">✗</td>
+                                            <td class="compatible-no">✗</td>
+                                            <td class="compatible-no">✗</td>
+                                            <td class="compatible-yes">✓</td>
+                                            <td class="compatible-no">✗</td>
+                                            <td class="compatible-no">✗</td>
+                                            <td class="compatible-no">✗</td>
+                                        </tr>
+                                        <tr>
+                                            <th>B+</th>
+                                            <td class="compatible-yes">✓</td>
+                                            <td class="compatible-yes">✓</td>
+                                            <td class="compatible-no">✗</td>
+                                            <td class="compatible-no">✗</td>
+                                            <td class="compatible-yes">✓</td>
+                                            <td class="compatible-yes">✓</td>
+                                            <td class="compatible-no">✗</td>
+                                            <td class="compatible-no">✗</td>
+                                        </tr>
+                                        <tr>
+                                            <th>AB-</th>
+                                            <td class="compatible-yes">✓</td>
+                                            <td class="compatible-no">✗</td>
+                                            <td class="compatible-yes">✓</td>
+                                            <td class="compatible-no">✗</td>
+                                            <td class="compatible-yes">✓</td>
+                                            <td class="compatible-no">✗</td>
+                                            <td class="compatible-yes">✓</td>
+                                            <td class="compatible-no">✗</td>
+                                        </tr>
+                                        <tr>
+                                            <th>AB+</th>
+                                            <td class="compatible-yes">✓</td>
+                                            <td class="compatible-yes">✓</td>
+                                            <td class="compatible-yes">✓</td>
+                                            <td class="compatible-yes">✓</td>
+                                            <td class="compatible-yes">✓</td>
+                                            <td class="compatible-yes">✓</td>
+                                            <td class="compatible-yes">✓</td>
+                                            <td class="compatible-yes">✓</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Request Blood -->
+                <div id="request-tab" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">Request Blood</h2>
+                        <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                            <i class="fas fa-plus mr-2"></i>New Request
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- Request Form -->
+                        <div class="lg:col-span-1">
+                            <div class="bg-white border border-gray-200 rounded-2xl p-6">
+                                <h3 class="font-bold text-gray-800 mb-4">Blood Request Form</h3>
+                                
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Patient Information</label>
+                                        <input type="text" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Patient full name">
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Blood Type Needed</label>
+                                            <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                                <option>Select Blood Type</option>
+                                                <option>A+</option>
+                                                <option>A-</option>
+                                                <option>B+</option>
+                                                <option>B-</option>
+                                                <option>O+</option>
+                                                <option>O-</option>
+                                                <option>AB+</option>
+                                                <option>AB-</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Units Required</label>
+                                            <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                                <option>1 unit</option>
+                                                <option>2 units</option>
+                                                <option>3 units</option>
+                                                <option>4 units</option>
+                                                <option>5+ units</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Hospital/Clinic</label>
+                                        <input type="text" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Hospital name and address">
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Urgency Level</label>
+                                        <div class="grid grid-cols-3 gap-2">
+                                            <button class="bg-gray-100 text-gray-700 border border-gray-300 py-2 rounded-lg font-medium">
+                                                Routine
+                                            </button>
+                                            <button class="bg-yellow-100 text-yellow-700 border border-yellow-300 py-2 rounded-lg font-medium">
+                                                Urgent
+                                            </button>
+                                            <button class="bg-red-100 text-red-700 border border-red-300 py-2 rounded-lg font-medium">
+                                                Emergency
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Reason for Request</label>
+                                        <textarea class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" rows="3" placeholder="Medical reason for blood requirement"></textarea>
+                                    </div>
+                                    
+                                    <button class="w-full bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg font-semibold transition-colors">
+                                        <i class="fas fa-hand-holding-medical mr-2"></i>
+                                        Submit Blood Request
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Active Requests -->
+                        <div class="lg:col-span-1">
+                            <div class="bg-white border border-gray-200 rounded-2xl p-6">
+                                <h3 class="font-bold text-gray-800 mb-4">Active Blood Requests</h3>
+                                
+                                <div class="space-y-4">
+                                    <!-- Request Card 1 -->
+                                    <div class="bg-red-50 border border-red-200 rounded-xl p-4">
+                                        <div class="flex justify-between items-start mb-2">
+                                            <h4 class="font-semibold text-red-800">Emergency Request - O-</h4>
+                                            <span class="request-status status-pending">Pending</span>
+                                        </div>
+                                        <p class="text-sm text-red-700 mb-2">City General Hospital • 2 units required</p>
+                                        <p class="text-xs text-red-600">Requested: Today, 10:30 AM • Priority: Emergency</p>
+                                    </div>
+                                    
+                                    <!-- Request Card 2 -->
+                                    <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                                        <div class="flex justify-between items-start mb-2">
+                                            <h4 class="font-semibold text-yellow-800">Surgery Requirement - A+</h4>
+                                            <span class="request-status status-approved">Approved</span>
+                                        </div>
+                                        <p class="text-sm text-yellow-700 mb-2">Unity Medical Center • 3 units required</p>
+                                        <p class="text-xs text-yellow-600">Requested: Dec 20, 2023 • Priority: Urgent</p>
+                                    </div>
+                                    
+                                    <!-- Request Card 3 -->
+                                    <div class="bg-green-50 border border-green-200 rounded-xl p-4">
+                                        <div class="flex justify-between items-start mb-2">
+                                            <h4 class="font-semibold text-green-800">Regular Transfusion - B+</h4>
+                                            <span class="request-status status-fulfilled">Fulfilled</span>
+                                        </div>
+                                        <p class="text-sm text-green-700 mb-2">Children's Hospital • 2 units required</p>
+                                        <p class="text-xs text-green-600">Requested: Dec 18, 2023 • Priority: Routine</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Donate Blood -->
+                <div id="donate-tab" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">Donate Blood</h2>
+                        <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                            <i class="fas fa-calendar mr-2"></i>Schedule Donation
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <!-- Donation Centers -->
+                        <div class="lg:col-span-2">
+                            <div class="bg-white border border-gray-200 rounded-2xl p-6">
+                                <h3 class="font-bold text-gray-800 mb-4">Nearby Donation Centers</h3>
+                                
+                                <div class="space-y-4">
+                                    <!-- Donation Center 1 -->
+                                    <div class="donation-card bg-white border border-gray-200 rounded-xl p-4">
+                                        <div class="flex items-start justify-between">
+                                            <div class="flex items-start space-x-4">
+                                                <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
+                                                    <i class="fas fa-hospital text-red-600"></i>
+                                                </div>
+                                                <div class="flex-1">
+                                                    <h4 class="font-semibold text-gray-800">City Blood Bank</h4>
+                                                    <p class="text-sm text-gray-600">123 Medical Drive, Downtown</p>
+                                                    <div class="flex items-center space-x-4 mt-2">
+                                                        <span class="flex items-center text-sm text-gray-500">
+                                                            <i class="fas fa-clock text-blue-500 mr-1"></i>
+                                                            Open until 8 PM
+                                                        </span>
+                                                        <span class="flex items-center text-sm text-gray-500">
+                                                            <i class="fas fa-map-marker-alt text-red-500 mr-1"></i>
+                                                            2.1 miles
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <span class="blood-status status-adequate">Open</span>
+                                        </div>
+                                        <div class="flex space-x-2 mt-4">
+                                            <button class="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg font-medium transition-colors">
+                                                Book Appointment
+                                            </button>
+                                            <button class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-lg font-medium transition-colors">
+                                                Directions
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Donation Center 2 -->
+                                    <div class="donation-card bg-white border border-gray-200 rounded-xl p-4">
+                                        <div class="flex items-start justify-between">
+                                            <div class="flex items-start space-x-4">
+                                                <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
+                                                    <i class="fas fa-clinic-medical text-red-600"></i>
+                                                </div>
+                                                <div class="flex-1">
+                                                    <h4 class="font-semibold text-gray-800">Community Blood Center</h4>
+                                                    <p class="text-sm text-gray-600">456 Health Avenue, Midtown</p>
+                                                    <div class="flex items-center space-x-4 mt-2">
+                                                        <span class="flex items-center text-sm text-gray-500">
+                                                            <i class="fas fa-clock text-blue-500 mr-1"></i>
+                                                            Open until 7 PM
+                                                        </span>
+                                                        <span class="flex items-center text-sm text-gray-500">
+                                                            <i class="fas fa-map-marker-alt text-red-500 mr-1"></i>
+                                                            3.5 miles
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <span class="blood-status status-adequate">Open</span>
+                                        </div>
+                                        <div class="flex space-x-2 mt-4">
+                                            <button class="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg font-medium transition-colors">
+                                                Book Appointment
+                                            </button>
+                                            <button class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-lg font-medium transition-colors">
+                                                Directions
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Donation Center 3 -->
+                                    <div class="donation-card bg-white border border-gray-200 rounded-xl p-4">
+                                        <div class="flex items-start justify-between">
+                                            <div class="flex items-start space-x-4">
+                                                <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
+                                                    <i class="fas fa-hospital text-red-600"></i>
+                                                </div>
+                                                <div class="flex-1">
+                                                    <h4 class="font-semibold text-gray-800">Red Cross Donation Center</h4>
+                                                    <p class="text-sm text-gray-600">789 Lifesaver Road, Uptown</p>
+                                                    <div class="flex items-center space-x-4 mt-2">
+                                                        <span class="flex items-center text-sm text-gray-500">
+                                                            <i class="fas fa-clock text-blue-500 mr-1"></i>
+                                                            Open until 6 PM
+                                                        </span>
+                                                        <span class="flex items-center text-sm text-gray-500">
+                                                            <i class="fas fa-map-marker-alt text-red-500 mr-1"></i>
+                                                            5.2 miles
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <span class="blood-status status-adequate">Open</span>
+                                        </div>
+                                        <div class="flex space-x-2 mt-4">
+                                            <button class="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg font-medium transition-colors">
+                                                Book Appointment
+                                            </button>
+                                            <button class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-lg font-medium transition-colors">
+                                                Directions
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Donation Info -->
+                        <div class="lg:col-span-1">
+                            <div class="bg-white border border-gray-200 rounded-2xl p-6">
+                                <h3 class="font-bold text-gray-800 mb-4">Your Donation Profile</h3>
+                                
+                                <div class="space-y-4">
+                                    <div class="text-center">
+                                        <div class="blood-group blood-group-oplus mx-auto mb-2">O+</div>
+                                        <p class="font-semibold text-gray-800">Blood Type: O Positive</p>
+                                        <p class="text-sm text-gray-600">Universal Plasma Donor</p>
+                                    </div>
+                                    
+                                    <div class="bg-blue-50 rounded-xl p-4">
+                                        <h4 class="font-semibold text-blue-800 mb-2">Next Eligible Donation</h4>
+                                        <p class="text-blue-700">March 15, 2024</p>
+                                        <p class="text-xs text-blue-600 mt-1">56 days from last donation</p>
+                                    </div>
+                                    
+                                    <div>
+                                        <h4 class="font-semibold text-gray-800 mb-2">Donation History</h4>
+                                        <div class="space-y-2">
+                                            <div class="flex justify-between text-sm">
+                                                <span>Total Donations</span>
+                                                <span class="font-semibold">8 times</span>
+                                            </div>
+                                            <div class="flex justify-between text-sm">
+                                                <span>Last Donation</span>
+                                                <span class="font-semibold">Jan 18, 2024</span>
+                                            </div>
+                                            <div class="flex justify-between text-sm">
+                                                <span>Total Blood Donated</span>
+                                                <span class="font-semibold">3.5 liters</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="bg-green-50 rounded-xl p-4">
+                                        <h4 class="font-semibold text-green-800 mb-1">Lives Impacted</h4>
+                                        <p class="text-2xl font-bold text-green-700">24</p>
+                                        <p class="text-xs text-green-600">people helped by your donations</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- My History -->
+                <div id="history-tab" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">My Blood History</h2>
+                        <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors">
+                            <i class="fas fa-download mr-2"></i>Export History
+                        </button>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <!-- History Card 1 -->
+                        <div class="bg-white border border-gray-200 rounded-2xl p-6 card-hover">
+                            <div class="flex items-start justify-between">
+                                <div class="flex items-start space-x-4">
+                                    <div class="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center">
+                                        <i class="fas fa-tint text-red-600 text-2xl"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="flex items-start justify-between">
+                                            <div>
+                                                <h3 class="font-bold text-gray-800 text-lg">Blood Donation</h3>
+                                                <p class="text-gray-600">Whole blood donation • 450ml</p>
+                                            </div>
+                                            <span class="request-status status-fulfilled">Completed</span>
+                                        </div>
+                                        
+                                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                                            <div>
+                                                <p class="text-sm text-gray-500">Date</p>
+                                                <p class="font-semibold">Jan 18, 2024</p>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm text-gray-500">Location</p>
+                                                <p class="font-semibold">City Blood Bank</p>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm text-gray-500">Blood Type</p>
+                                                <p class="font-semibold">O+</p>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm text-gray-500">Points Earned</p>
+                                                <p class="font-semibold">100</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- History Card 2 -->
+                        <div class="bg-white border border-gray-200 rounded-2xl p-6 card-hover">
+                            <div class="flex items-start justify-between">
+                                <div class="flex items-start space-x-4">
+                                    <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center">
+                                        <i class="fas fa-hand-holding-medical text-blue-600 text-2xl"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="flex items-start justify-between">
+                                            <div>
+                                                <h3 class="font-bold text-gray-800 text-lg">Blood Request</h3>
+                                                <p class="text-gray-600">For surgery • 2 units O+</p>
+                                            </div>
+                                            <span class="request-status status-fulfilled">Fulfilled</span>
+                                        </div>
+                                        
+                                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                                            <div>
+                                                <p class="text-sm text-gray-500">Request Date</p>
+                                                <p class="font-semibold">Dec 15, 2023</p>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm text-gray-500">Hospital</p>
+                                                <p class="font-semibold">City General</p>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm text-gray-500">Status</p>
+                                                <p class="font-semibold">Completed</p>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm text-gray-500">Units Used</p>
+                                                <p class="font-semibold">2</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="emergency-btn-fixed" id="globalEmergencyBtn" title="Emergency SOS">
+    <i class="fas fa-phone-alt"></i>
+    <span>SOS</span>
+</button>
+
+<!-- Emergency Modal -->
+<div class="emergency-modal" id="emergencyModal">
+    <div class="emergency-modal-content">
+        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+        </div>
+        <h3 class="text-xl font-bold text-gray-800 mb-2">Emergency SOS</h3>
+        <p class="text-gray-600 mb-6">Are you sure you want to trigger emergency alert? This will notify emergency services and your contacts.</p>
+        
+        <div class="flex space-x-3">
+            <button class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-3 rounded-lg font-semibold transition-colors" id="cancelEmergency">
+                Cancel
+            </button>
+            <button class="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg font-semibold transition-colors" id="confirmEmergency">
+                Confirm SOS
+            </button>
+        </div>
+    </div>
+</div>
+
+    <script>
+        // Tab functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tab switching
+            const tabs = document.querySelectorAll('.blood-tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const targetTab = this.getAttribute('data-tab');
+                    
+                    // Update active tab
+                    tabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Show target tab content
+                    tabContents.forEach(content => {
+                        content.classList.remove('active');
+                        content.classList.add('hidden');
+                    });
+                    
+                    document.getElementById(`${targetTab}-tab`).classList.remove('hidden');
+                    document.getElementById(`${targetTab}-tab`).classList.add('active');
+                });
+            });
+            
+            // Urgency level selection
+            const urgencyButtons = document.querySelectorAll('#request-tab .bg-gray-100, #request-tab .bg-yellow-100, #request-tab .bg-red-100');
+            urgencyButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    urgencyButtons.forEach(b => {
+                        b.classList.remove('bg-gray-100', 'bg-yellow-100', 'bg-red-100', 'text-gray-700', 'text-yellow-700', 'text-red-700', 'border-gray-300', 'border-yellow-300', 'border-red-300');
+                        b.classList.add('bg-gray-100', 'text-gray-700', 'border-gray-300');
+                    });
+                    
+                    if (this.textContent.includes('Urgent')) {
+                        this.classList.remove('bg-gray-100', 'text-gray-700', 'border-gray-300');
+                        this.classList.add('bg-yellow-100', 'text-yellow-700', 'border-yellow-300');
+                    } else if (this.textContent.includes('Emergency')) {
+                        this.classList.remove('bg-gray-100', 'text-gray-700', 'border-gray-300');
+                        this.classList.add('bg-red-100', 'text-red-700', 'border-red-300');
+                    }
+                });
+            });
+            
+            // Book appointment buttons
+            const bookButtons = document.querySelectorAll('.bg-red-500');
+            bookButtons.forEach(button => {
+                if (button.textContent.includes('Book Appointment')) {
+                    button.addEventListener('click', function() {
+                        showNotification('Redirecting to appointment scheduling...');
+                        
+                        // Simulate booking process
+                        this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Loading...';
+                        this.disabled = true;
+                        
+                        setTimeout(() => {
+                            this.innerHTML = 'Book Appointment';
+                            this.disabled = false;
+                            showNotification('Appointment booking page loaded');
+                        }, 1500);
+                    });
+                }
+            });
+            
+            // Submit blood request
+            const submitRequest = document.querySelector('#request-tab button.bg-red-500');
+            if (submitRequest) {
+                submitRequest.addEventListener('click', function() {
+                    const bloodType = document.querySelector('#request-tab select').value;
+                    
+                    if (bloodType === 'Select Blood Type') {
+                        showNotification('Please select a blood type', 'error');
+                        return;
+                    }
+                    
+                    showNotification(`Blood request submitted for ${bloodType}. You will be notified of updates.`);
+                    
+                    // Simulate submission process
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Submitting...';
+                    this.disabled = true;
+                    
+                    setTimeout(() => {
+                        this.innerHTML = '<i class="fas fa-hand-holding-medical mr-2"></i> Submit Blood Request';
+                        this.disabled = false;
+                    }, 2000);
+                });
+            }
+            
+            // Navigation active state
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    if (this.getAttribute('href') === '#') {
+                        e.preventDefault();
+                    }
+                    navItems.forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Add click animation
+                    this.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        this.style.transform = '';
+                    }, 150);
+                });
+            });
+
+            // Emergency SOS button
+            const sosButton = document.querySelector('.sos-pulse');
+            sosButton.addEventListener('click', function() {
+                // Confirm emergency
+                if (confirm('Are you sure you want to trigger emergency SOS? This will alert emergency services and your contacts.')) {
+                    this.innerHTML = '<i class="fas fa-phone-alt mr-2"></i> ALERTING EMERGENCY...';
+                    this.style.background = '#dc2626';
+                    
+                    // Simulate emergency call
+                    setTimeout(() => {
+                        showNotification('Emergency services alerted! Help is on the way. Your location has been shared.');
+                        this.innerHTML = '<i class="fas fa-phone-alt mr-2"></i> EMERGENCY SOS';
+                        this.style.background = '';
+                    }, 3000);
+                }
+            });
+
+            // Add staggered animation delays
+            const animateElements = document.querySelectorAll('.animate-scale-in, .animate-slide-in');
+            animateElements.forEach((el, index) => {
+                el.style.animationDelay = `${index * 0.1}s`;
+            });
+        });
+
+        // Notification function
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50 ${
+                type === 'error' ? 'bg-red-500 text-white' : 'bg-green-500 text-white'
+            }`;
+            notification.innerHTML = `
+                <div class="flex items-center space-x-2">
+                    <i class="fas ${type === 'error' ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.remove('translate-x-full');
+            }, 100);
+            
+            setTimeout(() => {
+                notification.classList.add('translate-x-full');
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+        // Global Emergency Button Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const emergencyBtn = document.getElementById('globalEmergencyBtn');
+    const emergencyModal = document.getElementById('emergencyModal');
+    const confirmEmergency = document.getElementById('confirmEmergency');
+    const cancelEmergency = document.getElementById('cancelEmergency');
+
+    // Open emergency modal
+    emergencyBtn.addEventListener('click', function() {
+        emergencyModal.style.display = 'flex';
+    });
+
+    // Confirm emergency
+    confirmEmergency.addEventListener('click', function() {
+        triggerEmergencyAlert();
+        emergencyModal.style.display = 'none';
+    });
+
+    // Cancel emergency
+    cancelEmergency.addEventListener('click', function() {
+        emergencyModal.style.display = 'none';
+    });
+
+    // Close modal when clicking outside
+    emergencyModal.addEventListener('click', function(e) {
+        if (e.target === emergencyModal) {
+            emergencyModal.style.display = 'none';
+        }
+    });
+
+    function triggerEmergencyAlert() {
+        const btn = emergencyBtn;
+        const originalHTML = btn.innerHTML;
+        
+        // Visual feedback
+        btn.classList.add('alerting');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>ALERTING...</span>';
+        
+        // Simulate emergency process
+        setTimeout(() => {
+            showEmergencyNotification('Emergency services alerted! Help is on the way.');
+            
+            // Reset button after 5 seconds
+            setTimeout(() => {
+                btn.classList.remove('alerting');
+                btn.innerHTML = originalHTML;
+            }, 5000);
+            
+        }, 3000);
+
+        // Here you would typically:
+        // 1. Send emergency request to your backend
+        // 2. Notify emergency contacts
+        // 3. Share location data
+        // 4. Connect to emergency services
+    }
+
+    function showEmergencyNotification(message) {
+        // Create notification
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-4 rounded-lg shadow-lg z-1002 animate-pulse';
+        notification.innerHTML = `
+            <div class="flex items-center space-x-3">
+                <i class="fas fa-ambulance text-xl"></i>
+                <div>
+                    <h4 class="font-bold">EMERGENCY ALERT</h4>
+                    <p class="text-sm">${message}</p>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Remove notification after 5 seconds
+        setTimeout(() => {
+            notification.remove();
+        }, 5000);
+    }
+});
+    </script>
+    <script src="sidebar.js"></script>
+</body>
+</html>

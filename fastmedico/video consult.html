@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FastMedico - Video Consult</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2563eb',
+                        'primary-dark': '#1d4ed8',
+                        secondary: '#10b981',
+                        accent: '#8b5cf6',
+                    },
+                    animation: {
+                        'slide-in': 'slideIn 0.6s ease-out',
+                        'fade-in': 'fadeIn 0.8s ease-out',
+                        'scale-in': 'scaleIn 0.5s ease-out',
+                        'pulse-gentle': 'pulseGentle 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        slideIn: {
+                            '0%': { opacity: '0', transform: 'translateX(-20px)' },
+                            '100%': { opacity: '1', transform: 'translateX(0)' }
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' }
+                        },
+                        scaleIn: {
+                            '0%': { opacity: '0', transform: 'scale(0.9)' },
+                            '100%': { opacity: '1', transform: 'scale(1)' }
+                        },
+                        pulseGentle: {
+                            '0%, 100%': { opacity: '1' },
+                            '50%': { opacity: '0.8' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+        }
+        
+        .sidebar {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        }
+        
+        .nav-item {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+        
+        .nav-item.active {
+            background: rgba(37, 99, 235, 0.2);
+            border-left: 4px solid #2563eb;
+        }
+        
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .quick-action {
+            transition: all 0.3s ease;
+        }
+        
+        .quick-action:hover {
+            transform: scale(1.05);
+        }
+        
+        .sos-pulse {
+            animation: sosPulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes sosPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+        }
+        
+        .notification-badge {
+            animation: bounce 2s ease-in-out infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .video-tab {
+            transition: all 0.3s ease;
+        }
+        
+        .video-tab.active {
+            background: #2563eb;
+            color: white;
+        }
+        
+        .consult-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .status-scheduled {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .status-ongoing {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-completed {
+            background: #dcfce7;
+            color: #166534;
+        }
+        
+        .status-cancelled {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+        
+        .doctor-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .doctor-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .doctor-card.selected {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+        }
+        
+        .availability-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+        
+        .availability-online {
+            background: #10b981;
+        }
+        
+        .availability-offline {
+            background: #6b7280;
+        }
+        
+        .availability-busy {
+            background: #f59e0b;
+        }
+        
+        .video-container {
+            background: #1f2937;
+            border-radius: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .video-placeholder {
+            background: linear-gradient(135deg, #374151, #4b5563);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #9ca3af;
+        }
+        
+        .call-controls {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 2rem;
+            padding: 1rem 2rem;
+        }
+        
+        .control-btn {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .control-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .control-end-call {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .control-mute {
+            background: #6b7280;
+            color: white;
+        }
+        
+        .control-video {
+            background: #6b7280;
+            color: white;
+        }
+        
+        .control-chat {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .control-active {
+            background: #10b981;
+            color: white;
+        }
+        
+        .chat-container {
+            background: white;
+            border-radius: 1rem;
+            display: flex;
+            flex-direction: column;
+            height: 400px;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+        
+        .message {
+            margin-bottom: 1rem;
+            max-width: 80%;
+        }
+        
+        .message-received {
+            align-self: flex-start;
+            background: #f3f4f6;
+            border-radius: 1rem 1rem 1rem 0;
+            padding: 0.75rem 1rem;
+        }
+        
+        .message-sent {
+            align-self: flex-end;
+            background: #3b82f6;
+            color: white;
+            border-radius: 1rem 1rem 0 1rem;
+            padding: 0.75rem 1rem;
+            margin-left: auto;
+        }
+        
+        .time-slot {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .time-slot:hover {
+            background: #dbeafe;
+            border-color: #2563eb;
+        }
+        
+        .time-slot.selected {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+        
+        .time-slot-disabled {
+            background: #f3f4f6;
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+        
+        .consultation-type {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .consultation-type:hover {
+            transform: scale(1.02);
+        }
+        
+        .consultation-type.selected {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+        }
+        
+        .recording-indicator {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .connection-quality {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            margin-right: 4px;
+        }
+        
+        .quality-excellent {
+            background: #10b981;
+        }
+        
+        .quality-good {
+            background: #f59e0b;
+        }
+        
+        .quality-poor {
+            background: #ef4444;
+        }
+        .emergency-btn-fixed {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, #dc2626, #ef4444);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    animation: emergencyPulse 2s infinite;
+}
+
+.emergency-btn-fixed:hover {
+    transform: scale(1.1);
+    box-shadow: 0 12px 35px rgba(220, 38, 38, 0.6);
+}
+
+.emergency-btn-fixed i {
+    font-size: 20px;
+    margin-bottom: 2px;
+}
+
+.emergency-btn-fixed.alerting {
+    animation: emergencyAlert 0.5s infinite alternate;
+    background: linear-gradient(135deg, #991b1b, #dc2626);
+}
+
+@keyframes emergencyPulse {
+    0%, 100% { 
+        transform: scale(1);
+        box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
+    }
+    50% { 
+        transform: scale(1.05);
+        box-shadow: 0 8px 30px rgba(220, 38, 38, 0.6);
+    }
+}
+
+@keyframes emergencyAlert {
+    0% { 
+        background: linear-gradient(135deg, #dc2626, #ef4444);
+        transform: scale(1);
+    }
+    100% { 
+        background: linear-gradient(135deg, #991b1b, #dc2626);
+        transform: scale(1.1);
+    }
+}
+
+/* Emergency Modal */
+.emergency-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1001;
+    align-items: center;
+    justify-content: center;
+}
+
+.emergency-modal-content {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+    </style>
+</head>
+<body class="min-h-screen flex">
+    <!-- Sidebar -->
+    <div class="sidebar w-64 min-h-screen text-white p-6 flex flex-col">
+        <!-- Logo -->
+        <div class="flex items-center space-x-3 mb-8 animate-slide-in">
+            <i class="fas fa-heartbeat text-2xl text-primary"></i>
+            <h1 class="text-xl font-bold">Fast<span class="text-primary">Medico</span></h1>
+        </div>
+
+        <!-- User Profile -->
+        <div class="flex items-center space-x-3 mb-8 p-4 bg-white/10 rounded-xl animate-scale-in">
+            <div id="sidebarInitials" class="w-12 h-12 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center">
+                <span class="text-white font-semibold">JS</span>
+                </div>
+                <div>
+                <h3 id="sidebarName" class="font-semibold">John Smith</h3>
+                <p id="sidebarPatientId" class="text-sm text-gray-300">Patient ID: PM123456</p>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="space-y-2 flex-1">
+            <a href="Dashboard.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-home w-5"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="My Profile.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-user-circle w-5"></i>
+                <span>My Profile</span>
+            </a>
+            <a href="hospitals.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-hospital w-5"></i>
+                <span>Hospitals</span>
+            </a>
+            <a href="Appointments.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-calendar-check w-5"></i>
+                <span>Appointments</span>
+            </a>
+            <a href="Prescriptions.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-prescription w-5"></i>
+                <span>Prescriptions</span>
+            </a>
+            <a href="Medical Records.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-file-medical w-5"></i>
+                <span>Medical Records</span>
+            </a>
+            <a href="Ambulance Services.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-ambulance w-5"></i>
+                <span>Ambulance</span>
+            </a>
+            <a href="Medicines.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-pills w-5"></i>
+                <span>Medicines</span>
+            </a>
+            <a href="Doctors.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-user-md w-5"></i>
+                <span>Doctors</span>
+            </a>
+            <a href="Blood Bank.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-tint w-5"></i>
+                <span>Blood Bank</span>
+            </a>
+            <a href="video consult.html" class="nav-item active flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-video w-5"></i>
+                <span>Video Consult</span>
+            </a>
+            <a href="Ai Diagnosis.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-robot w-5"></i>
+                <span>AI Diagnosis</span>
+            </a>
+        </nav>
+
+        <!-- Emergency SOS Button -->
+        <div class="mt-auto">
+            <button id="sidebarEmergencyBtn" class="w-full bg-red-500 hover:bg-red-600 text-white py-4 rounded-xl font-bold transition-all duration-300 sos-pulse">
+                EMERGENCY SOS
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 p-8 overflow-auto">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800 animate-slide-in">Video Consultation</h1>
+                <p class="text-gray-600 animate-slide-in" style="animation-delay: 0.1s">Connect with doctors from anywhere</p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <!-- Connection Status -->
+                <div class="flex items-center space-x-2 bg-green-50 px-3 py-2 rounded-lg">
+                    <div class="flex items-center space-x-1">
+                        <span class="connection-quality quality-excellent"></span>
+                        <span class="connection-quality quality-excellent"></span>
+                        <span class="connection-quality quality-excellent"></span>
+                    </div>
+                    <span class="text-green-700 font-semibold text-sm">Excellent Connection</span>
+                </div>
+                
+                <!-- Notifications -->
+                <div class="relative">
+                    <i class="fas fa-bell text-2xl text-gray-600 cursor-pointer hover:text-primary transition-colors"></i>
+                    <span class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full notification-badge"></span>
+                </div>
+                
+                <!-- User Avatar -->
+                <div id="headerAvatar" class="w-10 h-10 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center text-white font-semibold cursor-pointer hover:scale-110 transition-transform">
+                     JS
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 card-hover animate-scale-in">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Upcoming Consults</p>
+                        <h3 class="text-2xl font-bold text-gray-800 mt-2">3</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-video text-blue-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 card-hover animate-scale-in" style="animation-delay: 0.1s">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Doctors Online</p>
+                        <h3 class="text-2xl font-bold text-gray-800 mt-2">28</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-user-md text-green-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 card-hover animate-scale-in" style="animation-delay: 0.2s">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Avg. Wait Time</p>
+                        <h3 class="text-2xl font-bold text-gray-800 mt-2">4.2 min</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-clock text-purple-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 card-hover animate-scale-in" style="animation-delay: 0.3s">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Satisfaction Rate</p>
+                        <h3 class="text-2xl font-bold text-gray-800 mt-2">96%</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-star text-orange-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Video Consult Tabs -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 mb-8">
+            <div class="flex border-b border-gray-200 overflow-x-auto">
+                <button class="video-tab active flex-1 py-4 px-6 text-center font-semibold rounded-tl-2xl whitespace-nowrap" data-tab="live">
+                    <i class="fas fa-video mr-2"></i>Live Consultation
+                </button>
+                <button class="video-tab flex-1 py-4 px-6 text-center font-semibold whitespace-nowrap" data-tab="schedule">
+                    <i class="fas fa-calendar-plus mr-2"></i>Schedule Consult
+                </button>
+                <button class="video-tab flex-1 py-4 px-6 text-center font-semibold whitespace-nowrap" data-tab="doctors">
+                    <i class="fas fa-user-md mr-2"></i>Available Doctors
+                </button>
+                <button class="video-tab flex-1 py-4 px-6 text-center font-semibold rounded-tr-2xl whitespace-nowrap" data-tab="history">
+                    <i class="fas fa-history mr-2"></i>Consult History
+                </button>
+            </div>
+            
+            <!-- Tab Content -->
+            <div class="p-6">
+                <!-- Live Consultation -->
+                <div id="live-tab" class="tab-content active">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <!-- Video Call Interface -->
+                        <div class="lg:col-span-2">
+                            <div class="video-container h-96 relative">
+                                <!-- Doctor Video -->
+                                <div class="video-placeholder h-3/4 rounded-t-2xl">
+                                    <div class="text-center">
+                                        <i class="fas fa-user-md text-4xl mb-2"></i>
+                                        <p class="text-lg">Dr. Sarah Wilson</p>
+                                        <p class="text-sm">Cardiologist</p>
+                                        <div class="mt-4 flex items-center justify-center space-x-2">
+                                            <span class="connection-quality quality-excellent"></span>
+                                            <span class="connection-quality quality-excellent"></span>
+                                            <span class="connection-quality quality-excellent"></span>
+                                            <span class="text-green-400 text-sm">Connected</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Patient Video (Picture-in-Picture) -->
+                                <div class="absolute bottom-4 right-4 w-48 h-36 bg-gray-800 rounded-xl overflow-hidden">
+                                    <div class="video-placeholder h-full">
+                                        <div class="text-center p-4">
+                                            <i class="fas fa-user text-xl mb-1"></i>
+                                            <p class="text-xs">You</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Call Info -->
+                                <div class="absolute top-4 left-4 bg-black/50 text-white px-3 py-2 rounded-lg">
+                                    <p class="text-sm">00:12:45</p>
+                                </div>
+                                
+                                <!-- Recording Indicator -->
+                                <div class="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full flex items-center space-x-2">
+                                    <div class="w-2 h-2 bg-white rounded-full recording-indicator"></div>
+                                    <span class="text-xs font-semibold">REC</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Call Controls -->
+                            <div class="flex justify-center mt-6">
+                                <div class="call-controls flex items-center space-x-4">
+                                    <div class="control-btn control-mute">
+                                        <i class="fas fa-microphone"></i>
+                                    </div>
+                                    <div class="control-btn control-video control-active">
+                                        <i class="fas fa-video"></i>
+                                    </div>
+                                    <div class="control-btn control-chat">
+                                        <i class="fas fa-comment-medical"></i>
+                                    </div>
+                                    <div class="control-btn control-end-call">
+                                        <i class="fas fa-phone-slash"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Consultation Info & Chat -->
+                        <div class="lg:col-span-1">
+                            <div class="chat-container">
+                                <div class="bg-blue-500 text-white p-4 rounded-t-2xl">
+                                    <h3 class="font-semibold">Consultation with Dr. Sarah Wilson</h3>
+                                    <p class="text-blue-100 text-sm">Cardiologist • 12:45 elapsed</p>
+                                </div>
+                                
+                                <div class="chat-messages">
+                                    <div class="message message-received">
+                                        <p class="text-sm">Hello John, how are you feeling today?</p>
+                                        <p class="text-xs text-gray-500 mt-1">12:30 PM</p>
+                                    </div>
+                                    
+                                    <div class="message message-sent">
+                                        <p class="text-sm">Hello Doctor, I've been experiencing chest discomfort since morning.</p>
+                                        <p class="text-xs text-blue-100 mt-1">12:31 PM</p>
+                                    </div>
+                                    
+                                    <div class="message message-received">
+                                        <p class="text-sm">I see. Can you describe the pain? Is it sharp or dull?</p>
+                                        <p class="text-xs text-gray-500 mt-1">12:32 PM</p>
+                                    </div>
+                                    
+                                    <div class="message message-sent">
+                                        <p class="text-sm">It's more of a pressure feeling, like someone is sitting on my chest.</p>
+                                        <p class="text-xs text-blue-100 mt-1">12:33 PM</p>
+                                    </div>
+                                    
+                                    <div class="message message-received">
+                                        <p class="text-sm">Okay, I'm going to check your vital signs from the connected monitor.</p>
+                                        <p class="text-xs text-gray-500 mt-1">12:35 PM</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="border-t border-gray-200 p-4">
+                                    <div class="flex space-x-2">
+                                        <input type="text" placeholder="Type your message..." class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <button class="bg-blue-500 text-white px-4 py-2 rounded-lg">
+                                            <i class="fas fa-paper-plane"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Quick Actions -->
+                            <div class="grid grid-cols-2 gap-3 mt-4">
+                                <button class="bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg font-medium transition-colors">
+                                    <i class="fas fa-prescription mr-2"></i>E-Prescription
+                                </button>
+                                <button class="bg-purple-500 hover:bg-purple-600 text-white py-2 rounded-lg font-medium transition-colors">
+                                    <i class="fas fa-file-medical mr-2"></i>Health Report
+                                </button>
+                                <button class="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg font-medium transition-colors">
+                                    <i class="fas fa-share mr-2"></i>Share Screen
+                                </button>
+                                <button class="bg-gray-500 hover:bg-gray-600 text-white py-2 rounded-lg font-medium transition-colors">
+                                    <i class="fas fa-notes-medical mr-2"></i>Clinical Notes
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Schedule Consult -->
+                <div id="schedule-tab" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">Schedule Video Consultation</h2>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-500">Step 2 of 3</span>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <!-- Doctor Selection -->
+                        <div class="lg:col-span-1">
+                            <div class="bg-white border border-gray-200 rounded-2xl p-6">
+                                <h3 class="font-bold text-gray-800 mb-4">Select Doctor</h3>
+                                
+                                <div class="space-y-4 max-h-96 overflow-y-auto pr-2">
+                                    <!-- Doctor Option 1 -->
+                                    <div class="doctor-card bg-white border border-gray-200 rounded-xl p-4 cursor-pointer" data-doctor="1">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                                                <i class="fas fa-user-md text-blue-600"></i>
+                                            </div>
+                                            <div class="flex-1">
+                                                <h4 class="font-semibold text-gray-800">Dr. Sarah Wilson</h4>
+                                                <p class="text-sm text-gray-600">Cardiologist</p>
+                                                <div class="flex items-center mt-1">
+                                                    <span class="availability-dot availability-online"></span>
+                                                    <span class="text-xs text-green-600">Available Now</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Doctor Option 2 -->
+                                    <div class="doctor-card bg-white border border-gray-200 rounded-xl p-4 cursor-pointer" data-doctor="2">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                                                <i class="fas fa-user-md text-green-600"></i>
+                                            </div>
+                                            <div class="flex-1">
+                                                <h4 class="font-semibold text-gray-800">Dr. Michael Chen</h4>
+                                                <p class="text-sm text-gray-600">Dermatologist</p>
+                                                <div class="flex items-center mt-1">
+                                                    <span class="availability-dot availability-online"></span>
+                                                    <span class="text-xs text-green-600">Available Now</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Doctor Option 3 -->
+                                    <div class="doctor-card bg-white border border-gray-200 rounded-xl p-4 cursor-pointer" data-doctor="3">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                                                <i class="fas fa-user-md text-purple-600"></i>
+                                            </div>
+                                            <div class="flex-1">
+                                                <h4 class="font-semibold text-gray-800">Dr. Emily Rodriguez</h4>
+                                                <p class="text-sm text-gray-600">Pediatrician</p>
+                                                <div class="flex items-center mt-1">
+                                                    <span class="availability-dot availability-busy"></span>
+                                                    <span class="text-xs text-yellow-600">Busy</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Date & Time Selection -->
+                        <div class="lg:col-span-1">
+                            <div class="bg-white border border-gray-200 rounded-2xl p-6">
+                                <h3 class="font-bold text-gray-800 mb-4">Select Date & Time</h3>
+                                
+                                <!-- Date Selection -->
+                                <div class="mb-6">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Consultation Date</label>
+                                    <input type="date" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                
+                                <!-- Time Slots -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Available Time Slots</label>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div class="time-slot border border-gray-300 rounded-lg p-3 text-center text-sm font-medium">
+                                            9:00 AM
+                                        </div>
+                                        <div class="time-slot border border-gray-300 rounded-lg p-3 text-center text-sm font-medium">
+                                            9:30 AM
+                                        </div>
+                                        <div class="time-slot border border-gray-300 rounded-lg p-3 text-center text-sm font-medium">
+                                            10:00 AM
+                                        </div>
+                                        <div class="time-slot time-slot-disabled border border-gray-300 rounded-lg p-3 text-center text-sm font-medium">
+                                            10:30 AM
+                                        </div>
+                                        <div class="time-slot border border-gray-300 rounded-lg p-3 text-center text-sm font-medium">
+                                            11:00 AM
+                                        </div>
+                                        <div class="time-slot border border-gray-300 rounded-lg p-3 text-center text-sm font-medium">
+                                            11:30 AM
+                                        </div>
+                                        <div class="time-slot border border-gray-300 rounded-lg p-3 text-center text-sm font-medium">
+                                            2:00 PM
+                                        </div>
+                                        <div class="time-slot border border-gray-300 rounded-lg p-3 text-center text-sm font-medium">
+                                            2:30 PM
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Consultation Details -->
+                        <div class="lg:col-span-1">
+                            <div class="bg-white border border-gray-200 rounded-2xl p-6">
+                                <h3 class="font-bold text-gray-800 mb-4">Consultation Details</h3>
+                                
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Consultation Type</label>
+                                        <div class="space-y-2">
+                                            <div class="consultation-type bg-white border border-blue-500 rounded-lg p-3 cursor-pointer selected">
+                                                <div class="flex items-center space-x-3">
+                                                    <i class="fas fa-video text-blue-500 text-xl"></i>
+                                                    <div>
+                                                        <p class="text-sm font-medium">Video Consultation</p>
+                                                        <p class="text-xs text-gray-500">Face-to-face video call</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="consultation-type bg-white border border-gray-300 rounded-lg p-3 cursor-pointer">
+                                                <div class="flex items-center space-x-3">
+                                                    <i class="fas fa-phone text-gray-500 text-xl"></i>
+                                                    <div>
+                                                        <p class="text-sm font-medium">Audio Only</p>
+                                                        <p class="text-xs text-gray-500">Voice call consultation</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Reason for Consultation</label>
+                                        <textarea class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" rows="3" placeholder="Describe your symptoms or reason for consultation"></textarea>
+                                    </div>
+                                    
+                                    <div class="border-t border-gray-200 pt-4">
+                                        <div class="flex justify-between mb-2">
+                                            <span class="text-gray-600">Consultation Fee</span>
+                                            <span class="font-semibold">$120</span>
+                                        </div>
+                                        <div class="flex justify-between mb-2">
+                                            <span class="text-gray-600">Platform Fee</span>
+                                            <span class="font-semibold">$5</span>
+                                        </div>
+                                        <div class="flex justify-between font-bold text-lg border-t border-gray-200 pt-2">
+                                            <span>Total</span>
+                                            <span>$125</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <button class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold transition-colors">
+                                        <i class="fas fa-calendar-check mr-2"></i>
+                                        Schedule Consultation
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Available Doctors -->
+                <div id="doctors-tab" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">Available Doctors for Video Consult</h2>
+                        <div class="flex space-x-2">
+                            <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors">
+                                <i class="fas fa-filter mr-2"></i>Filter
+                            </button>
+                            <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors">
+                                <i class="fas fa-sort mr-2"></i>Sort
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Search Bar -->
+                    <div class="mb-6">
+                        <div class="relative">
+                            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" placeholder="Search doctors by name, specialty, or condition..." class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+                    
+                    <!-- Doctors Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Doctor Card 1 -->
+                        <div class="doctor-card bg-white border border-gray-200 rounded-2xl p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center">
+                                        <i class="fas fa-user-md text-blue-600 text-2xl"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-bold text-gray-800">Dr. Sarah Wilson</h3>
+                                        <p class="text-sm text-gray-600">Cardiologist</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="availability-dot availability-online"></span>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-3 mb-4">
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <i class="fas fa-graduation-cap text-gray-400 mr-2 w-5"></i>
+                                    <span>12 years experience</span>
+                                </div>
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <i class="fas fa-star text-yellow-400 mr-2 w-5"></i>
+                                    <span>4.9 (284 reviews)</span>
+                                </div>
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <i class="fas fa-clock text-gray-400 mr-2 w-5"></i>
+                                    <span>Available now</span>
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <span class="text-lg font-bold text-gray-800">$120</span>
+                                    <span class="text-sm text-gray-600">/consult</span>
+                                </div>
+                                <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                                    Book Now
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Doctor Card 2 -->
+                        <div class="doctor-card bg-white border border-gray-200 rounded-2xl p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-16 h-16 bg-green-100 rounded-xl flex items-center justify-center">
+                                        <i class="fas fa-user-md text-green-600 text-2xl"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-bold text-gray-800">Dr. Michael Chen</h3>
+                                        <p class="text-sm text-gray-600">Dermatologist</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="availability-dot availability-online"></span>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-3 mb-4">
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <i class="fas fa-graduation-cap text-gray-400 mr-2 w-5"></i>
+                                    <span>8 years experience</span>
+                                </div>
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <i class="fas fa-star text-yellow-400 mr-2 w-5"></i>
+                                    <span>4.8 (192 reviews)</span>
+                                </div>
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <i class="fas fa-clock text-gray-400 mr-2 w-5"></i>
+                                    <span>Available now</span>
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <span class="text-lg font-bold text-gray-800">$100</span>
+                                    <span class="text-sm text-gray-600">/consult</span>
+                                </div>
+                                <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                                    Book Now
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Doctor Card 3 -->
+                        <div class="doctor-card bg-white border border-gray-200 rounded-2xl p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-16 h-16 bg-purple-100 rounded-xl flex items-center justify-center">
+                                        <i class="fas fa-user-md text-purple-600 text-2xl"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-bold text-gray-800">Dr. Emily Rodriguez</h3>
+                                        <p class="text-sm text-gray-600">Pediatrician</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="availability-dot availability-busy"></span>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-3 mb-4">
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <i class="fas fa-graduation-cap text-gray-400 mr-2 w-5"></i>
+                                    <span>10 years experience</span>
+                                </div>
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <i class="fas fa-star text-yellow-400 mr-2 w-5"></i>
+                                    <span>4.9 (312 reviews)</span>
+                                </div>
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <i class="fas fa-clock text-gray-400 mr-2 w-5"></i>
+                                    <span>Available in 15 min</span>
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <span class="text-lg font-bold text-gray-800">$110</span>
+                                    <span class="text-sm text-gray-600">/consult</span>
+                                </div>
+                                <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                                    Book Now
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Consult History -->
+                <div id="history-tab" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">Consultation History</h2>
+                        <div class="flex space-x-2">
+                            <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors">
+                                <i class="fas fa-download mr-2"></i>Export
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- History Table -->
+                    <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Doctor</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <!-- Consultation 1 -->
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                                    <i class="fas fa-user-md text-blue-600"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="text-sm font-medium text-gray-900">Dr. Sarah Wilson</div>
+                                                    <div class="text-sm text-gray-500">Cardiologist</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900">Oct 15, 2023</div>
+                                            <div class="text-sm text-gray-500">10:30 AM</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">25 minutes</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="consult-status status-completed">Completed</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <button class="text-blue-600 hover:text-blue-900 mr-3">View Details</button>
+                                            <button class="text-green-600 hover:text-green-900">Re-book</button>
+                                        </td>
+                                    </tr>
+                                    
+                                    <!-- Consultation 2 -->
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                                                    <i class="fas fa-user-md text-green-600"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="text-sm font-medium text-gray-900">Dr. Michael Chen</div>
+                                                    <div class="text-sm text-gray-500">Dermatologist</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900">Oct 10, 2023</div>
+                                            <div class="text-sm text-gray-500">2:15 PM</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">18 minutes</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="consult-status status-completed">Completed</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <button class="text-blue-600 hover:text-blue-900 mr-3">View Details</button>
+                                            <button class="text-green-600 hover:text-green-900">Re-book</button>
+                                        </td>
+                                    </tr>
+                                    
+                                    <!-- Consultation 3 -->
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                                                    <i class="fas fa-user-md text-purple-600"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="text-sm font-medium text-gray-900">Dr. Emily Rodriguez</div>
+                                                    <div class="text-sm text-gray-500">Pediatrician</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900">Oct 5, 2023</div>
+                                            <div class="text-sm text-gray-500">11:00 AM</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">32 minutes</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="consult-status status-completed">Completed</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <button class="text-blue-600 hover:text-blue-900 mr-3">View Details</button>
+                                            <button class="text-green-600 hover:text-green-900">Re-book</button>
+                                        </td>
+                                    </tr>
+                                    
+                                    <!-- Consultation 4 -->
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                                    <i class="fas fa-user-md text-blue-600"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="text-sm font-medium text-gray-900">Dr. Robert Kim</div>
+                                                    <div class="text-sm text-gray-500">Neurologist</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900">Oct 18, 2023</div>
+                                            <div class="text-sm text-gray-500">3:30 PM</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">-</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="consult-status status-scheduled">Scheduled</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <button class="text-blue-600 hover:text-blue-900 mr-3">View Details</button>
+                                            <button class="text-red-600 hover:text-red-900">Cancel</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="emergency-btn-fixed" id="globalEmergencyBtn" title="Emergency SOS">
+    <i class="fas fa-phone-alt"></i>
+    <span>SOS</span>
+</button>
+
+<!-- Emergency Modal -->
+<div class="emergency-modal" id="emergencyModal">
+    <div class="emergency-modal-content">
+        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+        </div>
+        <h3 class="text-xl font-bold text-gray-800 mb-2">Emergency SOS</h3>
+        <p class="text-gray-600 mb-6">Are you sure you want to trigger emergency alert? This will notify emergency services and your contacts.</p>
+        
+        <div class="flex space-x-3">
+            <button class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-3 rounded-lg font-semibold transition-colors" id="cancelEmergency">
+                Cancel
+            </button>
+            <button class="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg font-semibold transition-colors" id="confirmEmergency">
+                Confirm SOS
+            </button>
+        </div>
+    </div>
+</div>
+    <script>
+        // Tab Switching Functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tab switching
+            const tabs = document.querySelectorAll('.video-tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const targetTab = tab.getAttribute('data-tab');
+                    
+                    // Update active tab
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    // Show target tab content
+                    tabContents.forEach(content => {
+                        content.classList.remove('active');
+                        content.classList.add('hidden');
+                    });
+                    
+                    const targetContent = document.getElementById(`${targetTab}-tab`);
+                    targetContent.classList.remove('hidden');
+                    targetContent.classList.add('active');
+                });
+            });
+            
+            // Doctor selection in schedule tab
+            const doctorCards = document.querySelectorAll('.doctor-card');
+            doctorCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    doctorCards.forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                });
+            });
+            
+            // Time slot selection
+            const timeSlots = document.querySelectorAll('.time-slot:not(.time-slot-disabled)');
+            timeSlots.forEach(slot => {
+                slot.addEventListener('click', () => {
+                    timeSlots.forEach(s => s.classList.remove('selected'));
+                    slot.classList.add('selected');
+                });
+            });
+            
+            // Consultation type selection
+            const consultationTypes = document.querySelectorAll('.consultation-type');
+            consultationTypes.forEach(type => {
+                type.addEventListener('click', () => {
+                    consultationTypes.forEach(t => t.classList.remove('selected'));
+                    type.classList.add('selected');
+                });
+            });
+            
+            // Call control buttons
+            const controlButtons = document.querySelectorAll('.control-btn');
+            controlButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    if (button.classList.contains('control-mute')) {
+                        button.classList.toggle('control-active');
+                        const icon = button.querySelector('i');
+                        if (button.classList.contains('control-active')) {
+                            icon.classList.remove('fa-microphone');
+                            icon.classList.add('fa-microphone-slash');
+                        } else {
+                            icon.classList.remove('fa-microphone-slash');
+                            icon.classList.add('fa-microphone');
+                        }
+                    } else if (button.classList.contains('control-video')) {
+                        button.classList.toggle('control-active');
+                        const icon = button.querySelector('i');
+                        if (button.classList.contains('control-active')) {
+                            icon.classList.remove('fa-video-slash');
+                            icon.classList.add('fa-video');
+                        } else {
+                            icon.classList.remove('fa-video');
+                            icon.classList.add('fa-video-slash');
+                        }
+                    }
+                });
+            });
+            
+            // Set minimum date to today for date input
+            const today = new Date().toISOString().split('T')[0];
+            document.querySelector('input[type="date"]').setAttribute('min', today);
+        });
+// Global Emergency Button Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const emergencyBtn = document.getElementById('globalEmergencyBtn');
+    const emergencyModal = document.getElementById('emergencyModal');
+    const confirmEmergency = document.getElementById('confirmEmergency');
+    const cancelEmergency = document.getElementById('cancelEmergency');
+
+    // Open emergency modal
+    emergencyBtn.addEventListener('click', function() {
+        emergencyModal.style.display = 'flex';
+    });
+
+    // Confirm emergency
+    confirmEmergency.addEventListener('click', function() {
+        triggerEmergencyAlert();
+        emergencyModal.style.display = 'none';
+    });
+
+    // Cancel emergency
+    cancelEmergency.addEventListener('click', function() {
+        emergencyModal.style.display = 'none';
+    });
+
+    // Close modal when clicking outside
+    emergencyModal.addEventListener('click', function(e) {
+        if (e.target === emergencyModal) {
+            emergencyModal.style.display = 'none';
+        }
+    });
+
+    function triggerEmergencyAlert() {
+        const btn = emergencyBtn;
+        const originalHTML = btn.innerHTML;
+        
+        // Visual feedback
+        btn.classList.add('alerting');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>ALERTING...</span>';
+        
+        // Simulate emergency process
+        setTimeout(() => {
+            showEmergencyNotification('Emergency services alerted! Help is on the way.');
+            
+            // Reset button after 5 seconds
+            setTimeout(() => {
+                btn.classList.remove('alerting');
+                btn.innerHTML = originalHTML;
+            }, 5000);
+            
+        }, 3000);
+
+        // Here you would typically:
+        // 1. Send emergency request to your backend
+        // 2. Notify emergency contacts
+        // 3. Share location data
+        // 4. Connect to emergency services
+    }
+
+    function showEmergencyNotification(message) {
+        // Create notification
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-4 rounded-lg shadow-lg z-1002 animate-pulse';
+        notification.innerHTML = `
+            <div class="flex items-center space-x-3">
+                <i class="fas fa-ambulance text-xl"></i>
+                <div>
+                    <h4 class="font-bold">EMERGENCY ALERT</h4>
+                    <p class="text-sm">${message}</p>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Remove notification after 5 seconds
+        setTimeout(() => {
+            notification.remove();
+        }, 5000);
+    }
+});
+    </script>
+    <script src="sidebar.js"></script>
+</body>
+</html>

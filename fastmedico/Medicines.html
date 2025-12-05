@@ -1,0 +1,2208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FastMedico - Medicines</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2563eb',
+                        'primary-dark': '#1d4ed8',
+                        secondary: '#10b981',
+                        accent: '#8b5cf6',
+                    },
+                    animation: {
+                        'slide-in': 'slideIn 0.6s ease-out',
+                        'fade-in': 'fadeIn 0.8s ease-out',
+                        'scale-in': 'scaleIn 0.5s ease-out',
+                        'pulse-gentle': 'pulseGentle 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        slideIn: {
+                            '0%': { opacity: '0', transform: 'translateX(-20px)' },
+                            '100%': { opacity: '1', transform: 'translateX(0)' }
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' }
+                        },
+                        scaleIn: {
+                            '0%': { opacity: '0', transform: 'scale(0.9)' },
+                            '100%': { opacity: '1', transform: 'scale(1)' }
+                        },
+                        pulseGentle: {
+                            '0%, 100%': { opacity: '1' },
+                            '50%': { opacity: '0.8' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+        }
+        
+        .sidebar {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        }
+        
+        .nav-item {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+        
+        .nav-item.active {
+            background: rgba(37, 99, 235, 0.2);
+            border-left: 4px solid #2563eb;
+        }
+        
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .quick-action {
+            transition: all 0.3s ease;
+        }
+        
+        .quick-action:hover {
+            transform: scale(1.05);
+        }
+        
+        .sos-pulse {
+            animation: sosPulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes sosPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+        }
+        
+        .notification-badge {
+            animation: bounce 2s ease-in-out infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .medicines-tab {
+            transition: all 0.3s ease;
+        }
+        
+        .medicines-tab.active {
+            background: #2563eb;
+            color: white;
+        }
+        
+        .medicine-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .status-available {
+            background: #dcfce7;
+            color: #166534;
+        }
+        
+        .status-lowstock {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-outofstock {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+        
+        .status-prescription {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .order-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .status-ordered {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-processing {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .status-shipped {
+            background: #ddd6fe;
+            color: #7c3aed;
+        }
+        
+        .status-delivered {
+            background: #dcfce7;
+            color: #166534;
+        }
+        
+        .medicine-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .medicine-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .medicine-card.selected {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+        }
+        
+        .prescription-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+        }
+        
+        .quantity-selector {
+            display: flex;
+            align-items: center;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            width: fit-content;
+        }
+        
+        .quantity-btn {
+            background: #f3f4f6;
+            border: none;
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .quantity-btn:hover {
+            background: #e5e7eb;
+        }
+        
+        .quantity-input {
+            width: 3rem;
+            height: 2rem;
+            border: none;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .cart-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .search-highlight {
+            background: #fef3c7;
+            padding: 0 2px;
+            border-radius: 2px;
+        }
+        
+        .price-strike {
+            text-decoration: line-through;
+            color: #6b7280;
+        }
+        
+        .discount-badge {
+            background: #ef4444;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .emergency-btn-fixed {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #dc2626, #ef4444);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            animation: emergencyPulse 2s infinite;
+        }
+
+        .emergency-btn-fixed:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 35px rgba(220, 38, 38, 0.6);
+        }
+
+        .emergency-btn-fixed i {
+            font-size: 20px;
+            margin-bottom: 2px;
+        }
+
+        .emergency-btn-fixed.alerting {
+            animation: emergencyAlert 0.5s infinite alternate;
+            background: linear-gradient(135deg, #991b1b, #dc2626);
+        }
+
+        @keyframes emergencyPulse {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
+            }
+            50% { 
+                transform: scale(1.05);
+                box-shadow: 0 8px 30px rgba(220, 38, 38, 0.6);
+            }
+        }
+
+        @keyframes emergencyAlert {
+            0% { 
+                background: linear-gradient(135deg, #dc2626, #ef4444);
+                transform: scale(1);
+            }
+            100% { 
+                background: linear-gradient(135deg, #991b1b, #dc2626);
+                transform: scale(1.1);
+            }
+        }
+
+        .emergency-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1001;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .emergency-modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex">
+    <!-- Sidebar -->
+    <div class="sidebar w-64 min-h-screen text-white p-6 flex flex-col">
+        <!-- Logo -->
+        <div class="flex items-center space-x-3 mb-8 animate-slide-in">
+            <i class="fas fa-heartbeat text-2xl text-primary"></i>
+            <h1 class="text-xl font-bold">Fast<span class="text-primary">Medico</span></h1>
+        </div>
+
+        <!-- User Profile -->
+        <div class="flex items-center space-x-3 mb-8 p-4 bg-white/10 rounded-xl animate-scale-in">
+            <div id="sidebarInitials" class="w-12 h-12 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center">
+                <span class="text-white font-semibold">JS</span>
+                </div>
+                <div>
+                <h3 id="sidebarName" class="font-semibold">John Smith</h3>
+                <p id="sidebarPatientId" class="text-sm text-gray-300">Patient ID: PM123456</p>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="space-y-2 flex-1">
+            <a href="Dashboard.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-home w-5"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="My Profile.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-user-circle w-5"></i>
+                <span>My Profile</span>
+            </a>
+            <a href="hospitals.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-hospital w-5"></i>
+                <span>Hospitals</span>
+            </a>
+            <a href="Appointments.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-calendar-check w-5"></i>
+                <span>Appointments</span>
+            </a>
+            <a href="Prescriptions.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-prescription w-5"></i>
+                <span>Prescriptions</span>
+            </a>
+            <a href="Medical Records.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-file-medical w-5"></i>
+                <span>Medical Records</span>
+            </a>
+            <a href="Ambulance Services.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-ambulance w-5"></i>
+                <span>Ambulance</span>
+            </a>
+            <a href="Medicines.html" class="nav-item active flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-pills w-5"></i>
+                <span>Medicines</span>
+            </a>
+            <a href="Doctors.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-user-md w-5"></i>
+                <span>Doctors</span>
+            </a>
+            <a href="Blood Bank.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-tint w-5"></i>
+                <span>Blood Bank</span>
+            </a>
+            <a href="video consult.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-video w-5"></i>
+                <span>Video Consult</span>
+            </a>
+            <a href="Ai Diagnosis.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-robot w-5"></i>
+                <span>AI Diagnosis</span>
+            </a>
+        </nav>
+
+        <!-- Emergency SOS Button -->
+        <div class="mt-auto">
+            <button id="sidebarEmergencyBtn" class="w-full bg-red-500 hover:bg-red-600 text-white py-4 rounded-xl font-bold transition-all duration-300 sos-pulse">
+                EMERGENCY SOS
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 p-8 overflow-auto">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800 animate-slide-in">Medicines & Pharmacy</h1>
+                <p class="text-gray-600 animate-slide-in" style="animation-delay: 0.1s">Order prescription and over-the-counter medicines</p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <!-- Cart Icon -->
+                <div class="relative cursor-pointer" id="cartIcon">
+                    <i class="fas fa-shopping-cart text-2xl text-gray-600 hover:text-primary transition-colors"></i>
+                    <span class="cart-badge" id="cartBadge">0</span>
+                </div>
+                
+                <!-- Notifications -->
+                <div class="relative cursor-pointer" id="notificationIcon">
+                    <i class="fas fa-bell text-2xl text-gray-600 hover:text-primary transition-colors"></i>
+                    <span class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full notification-badge" id="notificationBadge"></span>
+                </div>
+                
+                <div id="headerAvatar" class="w-10 h-10 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center text-white font-semibold cursor-pointer hover:scale-110 transition-transform">
+                     JS
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" id="quickStats">
+            <!-- Stats will be loaded dynamically -->
+        </div>
+
+        <!-- Medicines Tabs -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 mb-8">
+            <div class="flex border-b border-gray-200 overflow-x-auto">
+                <button class="medicines-tab active flex-1 py-4 px-6 text-center font-semibold rounded-tl-2xl whitespace-nowrap" data-tab="browse">
+                    <i class="fas fa-search mr-2"></i>Browse Medicines
+                </button>
+                <button class="medicines-tab flex-1 py-4 px-6 text-center font-semibold whitespace-nowrap" data-tab="prescriptions">
+                    <i class="fas fa-prescription mr-2"></i>My Prescriptions
+                </button>
+                <button class="medicines-tab flex-1 py-4 px-6 text-center font-semibold whitespace-nowrap" data-tab="orders">
+                    <i class="fas fa-shopping-bag mr-2"></i>My Orders
+                </button>
+                <button class="medicines-tab flex-1 py-4 px-6 text-center font-semibold rounded-tr-2xl whitespace-nowrap" data-tab="cart">
+                    <i class="fas fa-shopping-cart mr-2"></i>Shopping Cart
+                </button>
+            </div>
+            
+            <!-- Tab Content -->
+            <div class="p-6">
+                <!-- Browse Medicines -->
+                <div id="browse-tab" class="tab-content active">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">Browse Medicines</h2>
+                        <div class="flex space-x-2">
+                            <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors" id="filterBtn">
+                                <i class="fas fa-filter mr-2"></i>Filter
+                            </button>
+                            <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors" id="sortBtn">
+                                <i class="fas fa-sort mr-2"></i>Sort
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Search Bar -->
+                    <div class="mb-6">
+                        <div class="relative">
+                            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" id="medicineSearch" placeholder="Search medicines, brands, or conditions..." class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+                    
+                    <!-- Categories -->
+                    <div class="mb-6">
+                        <h3 class="font-semibold text-gray-800 mb-3">Categories</h3>
+                        <div class="flex space-x-2 overflow-x-auto pb-2" id="categoryFilters">
+                            <!-- Categories will be loaded dynamically -->
+                        </div>
+                    </div>
+                    
+                    <!-- Medicine Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="medicineGrid">
+                        <!-- Medicines will be loaded dynamically -->
+                    </div>
+                    
+                    <!-- Load More -->
+                    <div class="text-center mt-8">
+                        <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-2 rounded-lg font-medium transition-colors" id="loadMoreBtn">
+                            Load More Medicines
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- My Prescriptions -->
+                <div id="prescriptions-tab" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">My Prescriptions</h2>
+                        <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors" id="uploadPrescriptionBtn">
+                            <i class="fas fa-upload mr-2"></i>Upload Prescription
+                        </button>
+                    </div>
+                    
+                    <div class="space-y-6" id="prescriptionsList">
+                        <!-- Prescriptions will be loaded dynamically -->
+                    </div>
+                </div>
+                
+                <!-- My Orders -->
+                <div id="orders-tab" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">My Orders</h2>
+                        <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors" id="orderHistoryBtn">
+                            <i class="fas fa-history mr-2"></i>Order History
+                        </button>
+                    </div>
+                    
+                    <div class="space-y-6" id="ordersList">
+                        <!-- Orders will be loaded dynamically -->
+                    </div>
+                </div>
+                
+                <!-- Shopping Cart -->
+                <div id="cart-tab" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">Shopping Cart</h2>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-gray-600" id="cartItemsCount">0 items</span>
+                            <button class="text-red-500 hover:text-red-600 font-medium" id="clearCartBtn">
+                                <i class="fas fa-trash-alt mr-1"></i>Clear Cart
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <!-- Cart Items -->
+                        <div class="lg:col-span-2">
+                            <div class="bg-white border border-gray-200 rounded-2xl p-6">
+                                <h3 class="font-bold text-gray-800 mb-4">Cart Items</h3>
+                                
+                                <div class="space-y-4" id="cartItemsList">
+                                    <!-- Cart items will be loaded dynamically -->
+                                    <div class="text-center py-8" id="emptyCartMessage">
+                                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <i class="fas fa-shopping-cart text-gray-400 text-2xl"></i>
+                                        </div>
+                                        <p class="text-gray-600">Your cart is empty</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Order Summary -->
+                        <div class="lg:col-span-1">
+                            <div class="bg-white border border-gray-200 rounded-2xl p-6">
+                                <h3 class="font-bold text-gray-800 mb-4">Order Summary</h3>
+                                
+                                <div class="space-y-3" id="orderSummary">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Subtotal (0 items)</span>
+                                        <span class="font-semibold">₹0.00</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Discount</span>
+                                        <span class="font-semibold text-green-600">-₹0.00</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Shipping</span>
+                                        <span class="font-semibold">₹0.00</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Tax</span>
+                                        <span class="font-semibold">₹0.00</span>
+                                    </div>
+                                    <div class="border-t border-gray-200 pt-3">
+                                        <div class="flex justify-between">
+                                            <span class="font-bold text-gray-800">Total</span>
+                                            <span class="font-bold text-gray-800">₹0.00</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <button class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold transition-colors mt-6" id="checkoutBtn" disabled>
+                                    <i class="fas fa-lock mr-2"></i>
+                                    Proceed to Checkout
+                                </button>
+                                
+                                <div class="mt-4 text-center">
+                                    <p class="text-xs text-gray-500">
+                                        <i class="fas fa-shield-alt mr-1"></i>
+                                        Secure payment • Free delivery over ₹500
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="emergency-btn-fixed" id="globalEmergencyBtn" title="Emergency SOS">
+        <i class="fas fa-phone-alt"></i>
+        <span>SOS</span>
+    </button>
+
+    <!-- Emergency Modal -->
+    <div class="emergency-modal" id="emergencyModal">
+        <div class="emergency-modal-content">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Emergency SOS</h3>
+            <p class="text-gray-600 mb-6">Are you sure you want to trigger emergency alert? This will notify emergency services and your contacts.</p>
+            
+            <div class="flex space-x-3">
+                <button class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-3 rounded-lg font-semibold transition-colors" id="cancelEmergency">
+                    Cancel
+                </button>
+                <button class="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg font-semibold transition-colors" id="confirmEmergency">
+                    Confirm SOS
+                </button>
+            </div>
+        </div>
+    </div>
+    <script src="sidebar.js"></script>
+    <script>
+        // Medicine Database with Indian Names
+        const medicineDatabase = {
+            getMedicines: function() {
+                const storedData = localStorage.getItem('medicineDatabase');
+                if (storedData) {
+                    return JSON.parse(storedData);
+                }
+                
+                // Default Indian medicines data
+                return [
+                    {
+                        id: 1,
+                        name: "Azithromycin 500mg",
+                        brand: "Cipla",
+                        description: "Antibiotic for bacterial infections",
+                        category: "antibiotics",
+                        type: "prescription",
+                        price: 189,
+                        discount: 15,
+                        originalPrice: 222,
+                        stock: 45,
+                        status: "available",
+                        image: "fa-pills",
+                        color: "blue",
+                        packSize: "3 tablets",
+                        requiresPrescription: true
+                    },
+                    {
+                        id: 2,
+                        name: "Paracetamol 650mg",
+                        brand: "Crocin",
+                        description: "Pain reliever and fever reducer",
+                        category: "pain-relief",
+                        type: "otc",
+                        price: 25,
+                        discount: 10,
+                        originalPrice: 28,
+                        stock: 120,
+                        status: "available",
+                        image: "fa-pills",
+                        color: "red",
+                        packSize: "15 tablets",
+                        requiresPrescription: false
+                    },
+                    {
+                        id: 3,
+                        name: "Metformin 500mg",
+                        brand: "Glycomet",
+                        description: "For type 2 diabetes management",
+                        category: "diabetes",
+                        type: "prescription",
+                        price: 145,
+                        discount: 20,
+                        originalPrice: 181,
+                        stock: 32,
+                        status: "available",
+                        image: "fa-pills",
+                        color: "green",
+                        packSize: "30 tablets",
+                        requiresPrescription: true
+                    },
+                    {
+                        id: 4,
+                        name: "Amoxicillin 250mg",
+                        brand: "Almox",
+                        description: "Antibiotic for bacterial infections",
+                        category: "antibiotics",
+                        type: "prescription",
+                        price: 95,
+                        discount: 0,
+                        originalPrice: 95,
+                        stock: 8,
+                        status: "lowstock",
+                        image: "fa-capsules",
+                        color: "blue",
+                        packSize: "10 capsules",
+                        requiresPrescription: true
+                    },
+                    {
+                        id: 5,
+                        name: "Vitamin C 500mg",
+                        brand: "Limcee",
+                        description: "Immune system support",
+                        category: "supplements",
+                        type: "otc",
+                        price: 89,
+                        discount: 25,
+                        originalPrice: 119,
+                        stock: 67,
+                        status: "available",
+                        image: "fa-capsules",
+                        color: "orange",
+                        packSize: "30 tablets",
+                        requiresPrescription: false
+                    },
+                    {
+                        id: 6,
+                        name: "Cetirizine 10mg",
+                        brand: "Alerid",
+                        description: "Anti-allergy medication",
+                        category: "allergy",
+                        type: "otc",
+                        price: 42,
+                        discount: 5,
+                        originalPrice: 44,
+                        stock: 0,
+                        status: "outofstock",
+                        image: "fa-pills",
+                        color: "purple",
+                        packSize: "10 tablets",
+                        requiresPrescription: false
+                    },
+                    {
+                        id: 7,
+                        name: "Ashwagandha 500mg",
+                        brand: "Himalaya",
+                        description: "Ayurvedic stress relief",
+                        category: "ayurvedic",
+                        type: "otc",
+                        price: 299,
+                        discount: 30,
+                        originalPrice: 427,
+                        stock: 23,
+                        status: "available",
+                        image: "fa-leaf",
+                        color: "yellow",
+                        packSize: "60 capsules",
+                        requiresPrescription: false
+                    },
+                    {
+                        id: 8,
+                        name: "Ibuprofen 400mg",
+                        brand: "Brufen",
+                        description: "Pain and inflammation relief",
+                        category: "pain-relief",
+                        type: "otc",
+                        price: 38,
+                        discount: 0,
+                        originalPrice: 38,
+                        stock: 56,
+                        status: "available",
+                        image: "fa-pills",
+                        color: "red",
+                        packSize: "10 tablets",
+                        requiresPrescription: false
+                    }
+                ];
+            },
+            
+            saveMedicines: function(medicines) {
+                localStorage.setItem('medicineDatabase', JSON.stringify(medicines));
+                window.dispatchEvent(new Event('medicineDataChanged'));
+            },
+            
+            updateStock: function(medicineId, quantityChange) {
+                const medicines = this.getMedicines();
+                const medicine = medicines.find(m => m.id === medicineId);
+                
+                if (medicine) {
+                    medicine.stock = Math.max(0, medicine.stock - quantityChange);
+                    medicine.status = medicine.stock > 20 ? "available" : medicine.stock > 0 ? "lowstock" : "outofstock";
+                    this.saveMedicines(medicines);
+                    return true;
+                }
+                return false;
+            }
+        };
+
+        // Cart Management
+        const cartManager = {
+            getCart: function() {
+                const cartData = localStorage.getItem('medicineCart');
+                return cartData ? JSON.parse(cartData) : [];
+            },
+            
+            saveCart: function(cart) {
+                localStorage.setItem('medicineCart', JSON.stringify(cart));
+                this.updateCartStats();
+                window.dispatchEvent(new Event('cartUpdated'));
+            },
+            
+            addToCart: function(medicineId, quantity = 1) {
+                const cart = this.getCart();
+                const medicine = medicineDatabase.getMedicines().find(m => m.id === medicineId);
+                
+                if (!medicine) return false;
+                
+                // Check if already in cart
+                const existingItem = cart.find(item => item.id === medicineId);
+                
+                if (existingItem) {
+                    existingItem.quantity += quantity;
+                } else {
+                    cart.push({
+                        id: medicine.id,
+                        name: medicine.name,
+                        price: medicine.price,
+                        discount: medicine.discount,
+                        originalPrice: medicine.originalPrice,
+                        quantity: quantity,
+                        image: medicine.image,
+                        color: medicine.color,
+                        requiresPrescription: medicine.requiresPrescription
+                    });
+                }
+                
+                this.saveCart(cart);
+                return true;
+            },
+            
+            removeFromCart: function(medicineId) {
+                const cart = this.getCart();
+                const updatedCart = cart.filter(item => item.id !== medicineId);
+                this.saveCart(updatedCart);
+            },
+            
+            updateQuantity: function(medicineId, quantity) {
+                const cart = this.getCart();
+                const item = cart.find(item => item.id === medicineId);
+                
+                if (item) {
+                    item.quantity = Math.max(1, quantity);
+                    this.saveCart(cart);
+                }
+            },
+            
+            clearCart: function() {
+                this.saveCart([]);
+            },
+            
+            getCartTotal: function() {
+                const cart = this.getCart();
+                return cart.reduce((total, item) => {
+                    return total + (item.price * item.quantity);
+                }, 0);
+            },
+            
+            getCartDiscount: function() {
+                const cart = this.getCart();
+                return cart.reduce((total, item) => {
+                    const discountPerItem = ((item.originalPrice - item.price) * item.quantity);
+                    return total + discountPerItem;
+                }, 0);
+            },
+            
+            getCartCount: function() {
+                const cart = this.getCart();
+                return cart.reduce((total, item) => total + item.quantity, 0);
+            },
+            
+            updateCartStats: function() {
+                const cartCount = this.getCartCount();
+                document.getElementById('cartBadge').textContent = cartCount;
+                document.getElementById('cartItemsCount').textContent = `${cartCount} item${cartCount !== 1 ? 's' : ''}`;
+            }
+        };
+
+        // Prescription Management
+        const prescriptionManager = {
+            getPrescriptions: function() {
+                const storedData = localStorage.getItem('userPrescriptions');
+                if (storedData) {
+                    return JSON.parse(storedData);
+                }
+                
+                // Default prescriptions
+                return [
+                    {
+                        id: 1,
+                        medicineId: 1,
+                        medicineName: "Azithromycin 500mg",
+                        prescribedBy: "Dr. Rajesh Kumar",
+                        issueDate: "2023-12-10",
+                        expiryDate: "2024-06-10",
+                        refillsLeft: 2,
+                        totalRefills: 3,
+                        instructions: "Take 1 tablet daily for 3 days",
+                        status: "active"
+                    },
+                    {
+                        id: 2,
+                        medicineId: 3,
+                        medicineName: "Metformin 500mg",
+                        prescribedBy: "Dr. Priya Sharma",
+                        issueDate: "2023-11-25",
+                        expiryDate: "2024-05-25",
+                        refillsLeft: 1,
+                        totalRefills: 4,
+                        instructions: "Take 1 tablet twice daily with meals",
+                        status: "active"
+                    }
+                ];
+            },
+            
+            savePrescriptions: function(prescriptions) {
+                localStorage.setItem('userPrescriptions', JSON.stringify(prescriptions));
+            }
+        };
+
+        // Order Management
+        const orderManager = {
+            getOrders: function() {
+                const storedData = localStorage.getItem('medicineOrders');
+                if (storedData) {
+                    return JSON.parse(storedData);
+                }
+                
+                // Default orders
+                return [
+                    {
+                        id: 1,
+                        orderNumber: "MED-7284",
+                        date: "2023-12-18",
+                        deliveryDate: "2023-12-20",
+                        status: "delivered",
+                        items: [
+                            { id: 1, name: "Azithromycin 500mg", quantity: 1, price: 189 },
+                            { id: 5, name: "Vitamin C 500mg", quantity: 2, price: 89 }
+                        ],
+                        subtotal: 367,
+                        discount: 88,
+                        shipping: 49,
+                        tax: 29,
+                        total: 357,
+                        pharmacy: "Apollo Pharmacy",
+                        trackingId: "TRK-89432"
+                    },
+                    {
+                        id: 2,
+                        orderNumber: "MED-8159",
+                        date: "2023-12-22",
+                        deliveryDate: "2023-12-24",
+                        status: "shipped",
+                        items: [
+                            { id: 3, name: "Metformin 500mg", quantity: 1, price: 145 },
+                            { id: 7, name: "Ashwagandha 500mg", quantity: 1, price: 299 }
+                        ],
+                        subtotal: 444,
+                        discount: 128,
+                        shipping: 49,
+                        tax: 36,
+                        total: 401,
+                        pharmacy: "Wellness Forever",
+                        trackingId: "TRK-91247"
+                    }
+                ];
+            },
+            
+            saveOrders: function(orders) {
+                localStorage.setItem('medicineOrders', JSON.stringify(orders));
+            },
+            
+            createOrder: function(cart, shippingAddress, paymentMethod) {
+                const orders = this.getOrders();
+                const newOrder = {
+                    id: orders.length + 1,
+                    orderNumber: `MED-${Math.floor(1000 + Math.random() * 9000)}`,
+                    date: new Date().toISOString().split('T')[0],
+                    deliveryDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                    status: "ordered",
+                    items: cart.map(item => ({
+                        id: item.id,
+                        name: item.name,
+                        quantity: item.quantity,
+                        price: item.price
+                    })),
+                    subtotal: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+                    discount: cart.reduce((sum, item) => sum + ((item.originalPrice - item.price) * item.quantity), 0),
+                    shipping: 49,
+                    tax: 0,
+                    total: 0,
+                    pharmacy: "MedPlus Pharmacy",
+                    trackingId: `TRK-${Math.floor(100000 + Math.random() * 900000)}`,
+                    shippingAddress: shippingAddress,
+                    paymentMethod: paymentMethod
+                };
+                
+                // Calculate tax (18% GST)
+                newOrder.tax = Math.round((newOrder.subtotal - newOrder.discount) * 0.18);
+                newOrder.total = newOrder.subtotal - newOrder.discount + newOrder.shipping + newOrder.tax;
+                
+                orders.unshift(newOrder);
+                this.saveOrders(orders);
+                
+                // Update medicine stock
+                cart.forEach(item => {
+                    medicineDatabase.updateStock(item.id, item.quantity);
+                });
+                
+                return newOrder;
+            }
+        };
+
+        // UI Controller
+        const medicineUIController = {
+            init: function() {
+                this.loadQuickStats();
+                this.loadCategories();
+                this.loadMedicines();
+                this.loadPrescriptions();
+                this.loadOrders();
+                this.loadCart();
+                this.setupEventListeners();
+                this.setupEmergencyButton();
+                
+                // Subscribe to updates
+                window.addEventListener('cartUpdated', () => {
+                    this.loadCart();
+                    this.loadQuickStats();
+                });
+                
+                window.addEventListener('medicineDataChanged', () => {
+                    this.loadMedicines();
+                    this.loadQuickStats();
+                });
+            },
+            
+            loadQuickStats: function() {
+                const statsContainer = document.getElementById('quickStats');
+                const cartCount = cartManager.getCartCount();
+                const prescriptions = prescriptionManager.getPrescriptions();
+                const orders = orderManager.getOrders();
+                const activeOrders = orders.filter(o => o.status !== 'delivered').length;
+                
+                statsContainer.innerHTML = `
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 card-hover animate-scale-in">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 text-sm">Active Orders</p>
+                                <h3 class="text-2xl font-bold text-gray-800 mt-2">${activeOrders}</h3>
+                            </div>
+                            <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-shopping-bag text-blue-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 card-hover animate-scale-in" style="animation-delay: 0.1s">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 text-sm">Prescriptions</p>
+                                <h3 class="text-2xl font-bold text-gray-800 mt-2">${prescriptions.length}</h3>
+                            </div>
+                            <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-prescription-bottle text-green-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 card-hover animate-scale-in" style="animation-delay: 0.2s">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 text-sm">Cart Items</p>
+                                <h3 class="text-2xl font-bold text-gray-800 mt-2">${cartCount}</h3>
+                            </div>
+                            <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-shopping-cart text-purple-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 card-hover animate-scale-in" style="animation-delay: 0.3s">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 text-sm">Saved Medicines</p>
+                                <h3 class="text-2xl font-bold text-gray-800 mt-2">3</h3>
+                            </div>
+                            <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-heart text-orange-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            },
+            
+            loadCategories: function() {
+                const categories = [
+                    { id: 'all', name: 'All Medicines' },
+                    { id: 'antibiotics', name: 'Antibiotics' },
+                    { id: 'pain-relief', name: 'Pain Relief' },
+                    { id: 'diabetes', name: 'Diabetes' },
+                    { id: 'supplements', name: 'Supplements' },
+                    { id: 'allergy', name: 'Allergy' },
+                    { id: 'ayurvedic', name: 'Ayurvedic' },
+                    { id: 'prescription', name: 'Prescription Only' },
+                    { id: 'otc', name: 'Over-the-Counter' }
+                ];
+                
+                const container = document.getElementById('categoryFilters');
+                container.innerHTML = '';
+                
+                categories.forEach((cat, index) => {
+                    const button = document.createElement('button');
+                    button.className = index === 0 ? 'bg-blue-500 text-white px-4 py-2 rounded-lg font-medium whitespace-nowrap' : 'bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-medium whitespace-nowrap';
+                    button.textContent = cat.name;
+                    button.setAttribute('data-category', cat.id);
+                    button.addEventListener('click', () => this.filterByCategory(cat.id));
+                    container.appendChild(button);
+                });
+            },
+            
+            loadMedicines: function(filterCategory = 'all', searchTerm = '') {
+                const medicines = medicineDatabase.getMedicines();
+                const container = document.getElementById('medicineGrid');
+                container.innerHTML = '';
+                
+                let filteredMedicines = medicines;
+                
+                // Apply category filter
+                if (filterCategory !== 'all') {
+                    if (filterCategory === 'prescription') {
+                        filteredMedicines = medicines.filter(m => m.type === 'prescription');
+                    } else if (filterCategory === 'otc') {
+                        filteredMedicines = medicines.filter(m => m.type === 'otc');
+                    } else {
+                        filteredMedicines = medicines.filter(m => m.category === filterCategory);
+                    }
+                }
+                
+                // Apply search filter
+                if (searchTerm) {
+                    const term = searchTerm.toLowerCase();
+                    filteredMedicines = filteredMedicines.filter(m => 
+                        m.name.toLowerCase().includes(term) || 
+                        m.brand.toLowerCase().includes(term) ||
+                        m.description.toLowerCase().includes(term)
+                    );
+                }
+                
+                if (filteredMedicines.length === 0) {
+                    container.innerHTML = `
+                        <div class="col-span-full text-center py-12">
+                            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-search text-gray-400 text-2xl"></i>
+                            </div>
+                            <p class="text-gray-600">No medicines found matching your criteria</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                filteredMedicines.forEach(medicine => {
+                    const statusClass = {
+                        'available': 'status-available',
+                        'lowstock': 'status-lowstock',
+                        'outofstock': 'status-outofstock'
+                    }[medicine.status];
+                    
+                    const statusText = {
+                        'available': 'In Stock',
+                        'lowstock': 'Low Stock',
+                        'outofstock': 'Out of Stock'
+                    }[medicine.status];
+                    
+                    const typeClass = medicine.type === 'prescription' ? 'status-prescription' : 'status-available';
+                    const typeText = medicine.type === 'prescription' ? 'Rx Required' : 'OTC';
+                    
+                    const card = document.createElement('div');
+                    card.className = 'medicine-card bg-white border border-gray-200 rounded-2xl p-4 relative';
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="medicine-status ${statusClass}">${statusText}</span>
+                            <button class="text-gray-400 hover:text-red-500 transition-colors favorite-btn" data-medicine-id="${medicine.id}">
+                                <i class="far fa-heart"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="w-full h-32 bg-${medicine.color}-50 rounded-xl mb-3 flex items-center justify-center">
+                            <i class="${medicine.image} text-${medicine.color}-500 text-3xl"></i>
+                        </div>
+                        
+                        <h3 class="font-bold text-gray-800 mb-1">${medicine.name}</h3>
+                        <p class="text-sm text-gray-600 mb-2">${medicine.brand} • ${medicine.packSize}</p>
+                        
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <span class="font-bold text-gray-800">₹${medicine.price}</span>
+                                ${medicine.discount > 0 ? `
+                                    <span class="text-sm text-gray-500 ml-1 price-strike">₹${medicine.originalPrice}</span>
+                                    <span class="discount-badge ml-1">${medicine.discount}% OFF</span>
+                                ` : ''}
+                            </div>
+                            <span class="medicine-status ${typeClass}">${typeText}</span>
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <div class="quantity-selector">
+                                <button class="quantity-btn decrease-btn" data-medicine-id="${medicine.id}">-</button>
+                                <input type="text" class="quantity-input" value="1" readonly data-medicine-id="${medicine.id}">
+                                <button class="quantity-btn increase-btn" data-medicine-id="${medicine.id}">+</button>
+                            </div>
+                            <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors add-to-cart-btn" 
+                                    data-medicine-id="${medicine.id}"
+                                    ${medicine.status === 'outofstock' ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>
+                                ${medicine.status === 'outofstock' ? 'Out of Stock' : 'Add to Cart'}
+                            </button>
+                        </div>
+                    `;
+                    
+                    container.appendChild(card);
+                });
+                
+                this.setupMedicineCardListeners();
+            },
+            
+            loadPrescriptions: function() {
+                const prescriptions = prescriptionManager.getPrescriptions();
+                const container = document.getElementById('prescriptionsList');
+                container.innerHTML = '';
+                
+                if (prescriptions.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-12">
+                            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-prescription text-gray-400 text-2xl"></i>
+                            </div>
+                            <p class="text-gray-600">No prescriptions found</p>
+                            <button class="mt-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors" id="uploadFirstPrescriptionBtn">
+                                <i class="fas fa-upload mr-2"></i>Upload Your First Prescription
+                            </button>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                prescriptions.forEach(prescription => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-white border border-gray-200 rounded-2xl p-6 card-hover';
+                    card.innerHTML = `
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-start space-x-4">
+                                <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center">
+                                    <i class="fas fa-prescription text-blue-600 text-2xl"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-start justify-between">
+                                        <div>
+                                            <h3 class="font-bold text-gray-800 text-lg">${prescription.medicineName}</h3>
+                                            <p class="text-gray-600">Prescribed by ${prescription.prescribedBy}</p>
+                                        </div>
+                                        <span class="medicine-status status-available">Active</span>
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                                        <div>
+                                            <p class="text-sm text-gray-500">Issue Date</p>
+                                            <p class="font-semibold">${new Date(prescription.issueDate).toLocaleDateString()}</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm text-gray-500">Expires</p>
+                                            <p class="font-semibold">${new Date(prescription.expiryDate).toLocaleDateString()}</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm text-gray-500">Refills Left</p>
+                                            <p class="font-semibold">${prescription.refillsLeft} of ${prescription.totalRefills}</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm text-gray-500">Status</p>
+                                            <p class="font-semibold">Valid</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-4">
+                                        <p class="text-sm text-gray-500 mb-2">Instructions</p>
+                                        <p class="text-sm text-gray-700">${prescription.instructions}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex justify-end space-x-3 mt-4">
+                            <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors order-from-prescription-btn" data-prescription-id="${prescription.id}">
+                                <i class="fas fa-shopping-cart mr-2"></i>Order Now
+                            </button>
+                            <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors download-prescription-btn" data-prescription-id="${prescription.id}">
+                                <i class="fas fa-download mr-2"></i>Download
+                            </button>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            },
+            
+            loadOrders: function() {
+                const orders = orderManager.getOrders();
+                const container = document.getElementById('ordersList');
+                container.innerHTML = '';
+                
+                if (orders.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-12">
+                            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-shopping-bag text-gray-400 text-2xl"></i>
+                            </div>
+                            <p class="text-gray-600">No orders yet</p>
+                            <p class="text-sm text-gray-500 mt-2">Browse medicines and make your first order!</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                orders.forEach(order => {
+                    const statusClass = {
+                        'ordered': 'status-ordered',
+                        'processing': 'status-processing',
+                        'shipped': 'status-shipped',
+                        'delivered': 'status-delivered'
+                    }[order.status];
+                    
+                    const statusText = order.status.charAt(0).toUpperCase() + order.status.slice(1);
+                    
+                    const card = document.createElement('div');
+                    card.className = 'bg-white border border-gray-200 rounded-2xl p-6 card-hover';
+                    card.innerHTML = `
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-start space-x-4">
+                                <div class="w-16 h-16 ${order.status === 'delivered' ? 'bg-green-100' : 'bg-blue-100'} rounded-2xl flex items-center justify-center">
+                                    <i class="${order.status === 'delivered' ? 'fas fa-box' : 'fas fa-shipping-fast'} ${order.status === 'delivered' ? 'text-green-600' : 'text-blue-600'} text-2xl"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-start justify-between">
+                                        <div>
+                                            <h3 class="font-bold text-gray-800 text-lg">${order.orderNumber}</h3>
+                                            <p class="text-gray-600">${order.items.length} items • Total: ₹${order.total}</p>
+                                        </div>
+                                        <span class="order-status ${statusClass}">${statusText}</span>
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                                        <div>
+                                            <p class="text-sm text-gray-500">Order Date</p>
+                                            <p class="font-semibold">${new Date(order.date).toLocaleDateString()}</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm text-gray-500">${order.status === 'delivered' ? 'Delivered' : 'Est. Delivery'}</p>
+                                            <p class="font-semibold">${new Date(order.deliveryDate).toLocaleDateString()}</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm text-gray-500">Pharmacy</p>
+                                            <p class="font-semibold">${order.pharmacy}</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm text-gray-500">Tracking ID</p>
+                                            <p class="font-semibold">${order.trackingId}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-4">
+                                        <p class="text-sm text-gray-500 mb-2">Items</p>
+                                        <div class="flex flex-wrap gap-2">
+                                            ${order.items.map(item => `
+                                                <span class="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded">${item.name} (${item.quantity})</span>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex justify-end space-x-3 mt-4">
+                            ${order.status === 'delivered' ? `
+                                <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors reorder-btn" data-order-id="${order.id}">
+                                    <i class="fas fa-redo mr-2"></i>Reorder
+                                </button>
+                            ` : `
+                                <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors track-order-btn" data-order-id="${order.id}">
+                                    <i class="fas fa-map-marker-alt mr-2"></i>Track Order
+                                </button>
+                            `}
+                            <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors invoice-btn" data-order-id="${order.id}">
+                                <i class="fas fa-file-invoice mr-2"></i>Invoice
+                            </button>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            },
+            
+            loadCart: function() {
+                const cart = cartManager.getCart();
+                const cartItemsContainer = document.getElementById('cartItemsList');
+                const orderSummaryContainer = document.getElementById('orderSummary');
+                const checkoutBtn = document.getElementById('checkoutBtn');
+                const emptyCartMessage = document.getElementById('emptyCartMessage');
+                
+                if (cart.length === 0) {
+                    cartItemsContainer.innerHTML = `
+                        <div class="text-center py-8" id="emptyCartMessage">
+                            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-shopping-cart text-gray-400 text-2xl"></i>
+                            </div>
+                            <p class="text-gray-600">Your cart is empty</p>
+                        </div>
+                    `;
+                    
+                    orderSummaryContainer.innerHTML = `
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Subtotal (0 items)</span>
+                            <span class="font-semibold">₹0.00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Discount</span>
+                            <span class="font-semibold text-green-600">-₹0.00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Shipping</span>
+                            <span class="font-semibold">₹0.00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Tax</span>
+                            <span class="font-semibold">₹0.00</span>
+                        </div>
+                        <div class="border-t border-gray-200 pt-3">
+                            <div class="flex justify-between">
+                                <span class="font-bold text-gray-800">Total</span>
+                                <span class="font-bold text-gray-800">₹0.00</span>
+                            </div>
+                        </div>
+                    `;
+                    
+                    checkoutBtn.disabled = true;
+                    return;
+                }
+                
+                // Hide empty cart message
+                if (emptyCartMessage) emptyCartMessage.style.display = 'none';
+                
+                // Load cart items
+                cartItemsContainer.innerHTML = '';
+                cart.forEach(item => {
+                    const cartItem = document.createElement('div');
+                    cartItem.className = 'flex items-center justify-between py-4 border-b border-gray-200';
+                    cartItem.innerHTML = `
+                        <div class="flex items-center space-x-4">
+                            <div class="w-16 h-16 bg-${item.color}-50 rounded-xl flex items-center justify-center">
+                                <i class="${item.image} text-${item.color}-500"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-800">${item.name}</h4>
+                                <div class="flex items-center space-x-2 mt-1">
+                                    <span class="font-bold text-gray-800">₹${item.price}</span>
+                                    ${item.discount > 0 ? `
+                                        <span class="text-sm text-gray-500 price-strike">₹${item.originalPrice}</span>
+                                        <span class="discount-badge">${item.discount}% OFF</span>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center space-x-4">
+                            <div class="quantity-selector">
+                                <button class="quantity-btn cart-decrease-btn" data-medicine-id="${item.id}">-</button>
+                                <input type="text" class="quantity-input cart-quantity-input" value="${item.quantity}" readonly data-medicine-id="${item.id}">
+                                <button class="quantity-btn cart-increase-btn" data-medicine-id="${item.id}">+</button>
+                            </div>
+                            <button class="text-red-500 hover:text-red-600 remove-from-cart-btn" data-medicine-id="${item.id}">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    `;
+                    cartItemsContainer.appendChild(cartItem);
+                });
+                
+                // Calculate totals
+                const subtotal = cartManager.getCartTotal();
+                const discount = cartManager.getCartDiscount();
+                const shipping = cart.length > 0 ? 49 : 0;
+                const tax = Math.round((subtotal - discount) * 0.18);
+                const total = subtotal - discount + shipping + tax;
+                
+                // Update order summary
+                orderSummaryContainer.innerHTML = `
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Subtotal (${cart.length} items)</span>
+                        <span class="font-semibold">₹${subtotal.toFixed(2)}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Discount</span>
+                        <span class="font-semibold text-green-600">-₹${discount.toFixed(2)}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Shipping</span>
+                        <span class="font-semibold">₹${shipping.toFixed(2)}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Tax (18% GST)</span>
+                        <span class="font-semibold">₹${tax.toFixed(2)}</span>
+                    </div>
+                    <div class="border-t border-gray-200 pt-3">
+                        <div class="flex justify-between">
+                            <span class="font-bold text-gray-800">Total</span>
+                            <span class="font-bold text-gray-800">₹${total.toFixed(2)}</span>
+                        </div>
+                    </div>
+                `;
+                
+                checkoutBtn.disabled = false;
+                
+                // Setup cart item listeners
+                this.setupCartItemListeners();
+            },
+            
+            filterByCategory: function(categoryId) {
+                // Update active category button
+                const categoryButtons = document.querySelectorAll('#categoryFilters button');
+                categoryButtons.forEach(btn => {
+                    if (btn.getAttribute('data-category') === categoryId) {
+                        btn.className = 'bg-blue-500 text-white px-4 py-2 rounded-lg font-medium whitespace-nowrap';
+                    } else {
+                        btn.className = 'bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-medium whitespace-nowrap';
+                    }
+                });
+                
+                // Load filtered medicines
+                const searchTerm = document.getElementById('medicineSearch').value;
+                this.loadMedicines(categoryId, searchTerm);
+            },
+            
+            setupEventListeners: function() {
+                // Tab switching
+                document.querySelectorAll('.medicines-tab').forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        const targetTab = tab.getAttribute('data-tab');
+                        
+                        // Update active tab
+                        document.querySelectorAll('.medicines-tab').forEach(t => t.classList.remove('active'));
+                        tab.classList.add('active');
+                        
+                        // Show target tab content
+                        document.querySelectorAll('.tab-content').forEach(content => {
+                            content.classList.remove('active');
+                            content.classList.add('hidden');
+                        });
+                        
+                        document.getElementById(`${targetTab}-tab`).classList.remove('hidden');
+                        document.getElementById(`${targetTab}-tab`).classList.add('active');
+                        
+                        // Refresh data if needed
+                        if (targetTab === 'cart') {
+                            this.loadCart();
+                        }
+                    });
+                });
+                
+                // Search functionality
+                document.getElementById('medicineSearch').addEventListener('input', (e) => {
+                    const searchTerm = e.target.value;
+                    const activeCategory = document.querySelector('#categoryFilters .bg-blue-500').getAttribute('data-category');
+                    this.loadMedicines(activeCategory, searchTerm);
+                });
+                
+                // Cart icon click
+                document.getElementById('cartIcon').addEventListener('click', () => {
+                    document.querySelector('.medicines-tab[data-tab="cart"]').click();
+                });
+                
+                // Clear cart button
+                document.getElementById('clearCartBtn').addEventListener('click', () => {
+                    if (confirm('Are you sure you want to clear your cart?')) {
+                        cartManager.clearCart();
+                        this.showNotification('Cart cleared successfully', 'success');
+                    }
+                });
+                
+                // Checkout button
+                document.getElementById('checkoutBtn').addEventListener('click', () => {
+                    const cart = cartManager.getCart();
+                    if (cart.length === 0) return;
+                    
+                    // Check for prescription items
+                    const prescriptionItems = cart.filter(item => item.requiresPrescription);
+                    if (prescriptionItems.length > 0) {
+                        this.showNotification('Prescription required for some items. Please upload prescription before checkout.', 'warning');
+                        return;
+                    }
+                    
+                    // Proceed to checkout
+                    this.showCheckoutModal();
+                });
+                
+                // Upload prescription button
+                document.getElementById('uploadPrescriptionBtn').addEventListener('click', () => {
+                    this.showUploadPrescriptionModal();
+                });
+                
+                // Filter and sort buttons
+                document.getElementById('filterBtn').addEventListener('click', () => {
+                    this.showFilterModal();
+                });
+                
+                document.getElementById('sortBtn').addEventListener('click', () => {
+                    this.showSortModal();
+                });
+                
+                // Load more button
+                document.getElementById('loadMoreBtn').addEventListener('click', () => {
+                    this.showNotification('Loading more medicines...', 'info');
+                    // In a real app, this would load more medicines from the server
+                });
+                
+                // Navigation active state
+                const navItems = document.querySelectorAll('.nav-item');
+                navItems.forEach(item => {
+                    item.addEventListener('click', function(e) {
+                        if (this.getAttribute('href') === '#') {
+                            e.preventDefault();
+                        }
+                        navItems.forEach(i => i.classList.remove('active'));
+                        this.classList.add('active');
+                    });
+                });
+            },
+            
+            setupMedicineCardListeners: function() {
+                // Favorite buttons
+                document.querySelectorAll('.favorite-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const heartIcon = btn.querySelector('i');
+                        if (heartIcon.classList.contains('far')) {
+                            heartIcon.classList.remove('far');
+                            heartIcon.classList.add('fas', 'text-red-500');
+                            this.showNotification('Added to favorites', 'success');
+                        } else {
+                            heartIcon.classList.remove('fas', 'text-red-500');
+                            heartIcon.classList.add('far');
+                            this.showNotification('Removed from favorites', 'info');
+                        }
+                    });
+                });
+                
+                // Quantity buttons
+                document.querySelectorAll('.increase-btn, .decrease-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const medicineId = parseInt(btn.getAttribute('data-medicine-id'));
+                        const input = document.querySelector(`.quantity-input[data-medicine-id="${medicineId}"]`);
+                        let value = parseInt(input.value);
+                        
+                        if (btn.classList.contains('increase-btn')) {
+                            value++;
+                        } else {
+                            value = Math.max(1, value - 1);
+                        }
+                        
+                        input.value = value;
+                    });
+                });
+                
+                // Add to cart buttons
+                document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const medicineId = parseInt(btn.getAttribute('data-medicine-id'));
+                        const input = document.querySelector(`.quantity-input[data-medicine-id="${medicineId}"]`);
+                        const quantity = parseInt(input.value);
+                        
+                        cartManager.addToCart(medicineId, quantity);
+                        this.showNotification('Added to cart successfully', 'success');
+                        
+                        // Animate cart icon
+                        const cartIcon = document.querySelector('#cartIcon i');
+                        cartIcon.style.transform = 'scale(1.2)';
+                        setTimeout(() => {
+                            cartIcon.style.transform = 'scale(1)';
+                        }, 300);
+                    });
+                });
+            },
+            
+            setupCartItemListeners: function() {
+                // Cart quantity buttons
+                document.querySelectorAll('.cart-increase-btn, .cart-decrease-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const medicineId = parseInt(btn.getAttribute('data-medicine-id'));
+                        const input = document.querySelector(`.cart-quantity-input[data-medicine-id="${medicineId}"]`);
+                        let value = parseInt(input.value);
+                        
+                        if (btn.classList.contains('cart-increase-btn')) {
+                            value++;
+                        } else {
+                            value = Math.max(1, value - 1);
+                        }
+                        
+                        cartManager.updateQuantity(medicineId, value);
+                    });
+                });
+                
+                // Remove from cart buttons
+                document.querySelectorAll('.remove-from-cart-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const medicineId = parseInt(btn.getAttribute('data-medicine-id'));
+                        cartManager.removeFromCart(medicineId);
+                        this.showNotification('Removed from cart', 'info');
+                    });
+                });
+            },
+            
+            setupEmergencyButton: function() {
+                const emergencyBtn = document.getElementById('globalEmergencyBtn');
+                const sidebarEmergencyBtn = document.getElementById('sidebarEmergencyBtn');
+                const emergencyModal = document.getElementById('emergencyModal');
+                const confirmEmergency = document.getElementById('confirmEmergency');
+                const cancelEmergency = document.getElementById('cancelEmergency');
+
+                // Open emergency modal
+                const openEmergencyModal = () => {
+                    emergencyModal.style.display = 'flex';
+                };
+
+                emergencyBtn.addEventListener('click', openEmergencyModal);
+                sidebarEmergencyBtn.addEventListener('click', openEmergencyModal);
+
+                // Confirm emergency
+                confirmEmergency.addEventListener('click', () => {
+                    this.triggerEmergencyAlert();
+                    emergencyModal.style.display = 'none';
+                });
+
+                // Cancel emergency
+                cancelEmergency.addEventListener('click', () => {
+                    emergencyModal.style.display = 'none';
+                });
+
+                // Close modal when clicking outside
+                emergencyModal.addEventListener('click', (e) => {
+                    if (e.target === emergencyModal) {
+                        emergencyModal.style.display = 'none';
+                    }
+                });
+            },
+            
+            triggerEmergencyAlert: function() {
+                const btn = document.getElementById('globalEmergencyBtn');
+                const originalHTML = btn.innerHTML;
+                
+                // Visual feedback
+                btn.classList.add('alerting');
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>ALERTING...</span>';
+                
+                // Simulate emergency process
+                setTimeout(() => {
+                    this.showEmergencyNotification('Emergency services alerted! Help is on the way.');
+                    
+                    // Reset button after 5 seconds
+                    setTimeout(() => {
+                        btn.classList.remove('alerting');
+                        btn.innerHTML = originalHTML;
+                    }, 5000);
+                    
+                }, 3000);
+            },
+            
+            showCheckoutModal: function() {
+                const cart = cartManager.getCart();
+                const subtotal = cartManager.getCartTotal();
+                const discount = cartManager.getCartDiscount();
+                const shipping = 49;
+                const tax = Math.round((subtotal - discount) * 0.18);
+                const total = subtotal - discount + shipping + tax;
+                
+                const modalHTML = `
+                    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" id="checkoutModal">
+                        <div class="bg-white rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="text-xl font-bold text-gray-800">Checkout</h3>
+                                <button class="text-gray-400 hover:text-gray-600" onclick="document.getElementById('checkoutModal').remove()">
+                                    <i class="fas fa-times text-xl"></i>
+                                </button>
+                            </div>
+                            
+                            <div class="space-y-6">
+                                <!-- Shipping Address -->
+                                <div>
+                                    <h4 class="font-semibold text-gray-800 mb-3">Shipping Address</h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <input type="text" placeholder="Full Name" class="border border-gray-300 rounded-lg p-3" id="checkoutName">
+                                        <input type="text" placeholder="Phone Number" class="border border-gray-300 rounded-lg p-3" id="checkoutPhone">
+                                        <input type="text" placeholder="Address Line 1" class="border border-gray-300 rounded-lg p-3 md:col-span-2" id="checkoutAddress1">
+                                        <input type="text" placeholder="Address Line 2" class="border border-gray-300 rounded-lg p-3 md:col-span-2" id="checkoutAddress2">
+                                        <input type="text" placeholder="City" class="border border-gray-300 rounded-lg p-3" id="checkoutCity">
+                                        <input type="text" placeholder="Pincode" class="border border-gray-300 rounded-lg p-3" id="checkoutPincode">
+                                    </div>
+                                </div>
+                                
+                                <!-- Payment Method -->
+                                <div>
+                                    <h4 class="font-semibold text-gray-800 mb-3">Payment Method</h4>
+                                    <div class="space-y-2">
+                                        <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer">
+                                            <input type="radio" name="paymentMethod" value="card" class="mr-3" checked>
+                                            <i class="fas fa-credit-card text-blue-500 mr-2"></i>
+                                            <span>Credit/Debit Card</span>
+                                        </label>
+                                        <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer">
+                                            <input type="radio" name="paymentMethod" value="upi" class="mr-3">
+                                            <i class="fas fa-mobile-alt text-green-500 mr-2"></i>
+                                            <span>UPI</span>
+                                        </label>
+                                        <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer">
+                                            <input type="radio" name="paymentMethod" value="cod" class="mr-3">
+                                            <i class="fas fa-money-bill-wave text-yellow-500 mr-2"></i>
+                                            <span>Cash on Delivery</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <!-- Order Summary -->
+                                <div>
+                                    <h4 class="font-semibold text-gray-800 mb-3">Order Summary</h4>
+                                    <div class="bg-gray-50 rounded-xl p-4">
+                                        <div class="space-y-2">
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600">Subtotal (${cart.length} items)</span>
+                                                <span class="font-semibold">₹${subtotal.toFixed(2)}</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600">Discount</span>
+                                                <span class="font-semibold text-green-600">-₹${discount.toFixed(2)}</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600">Shipping</span>
+                                                <span class="font-semibold">₹${shipping.toFixed(2)}</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600">Tax (18% GST)</span>
+                                                <span class="font-semibold">₹${tax.toFixed(2)}</span>
+                                            </div>
+                                            <div class="border-t border-gray-300 pt-2">
+                                                <div class="flex justify-between font-bold">
+                                                    <span>Total</span>
+                                                    <span>₹${total.toFixed(2)}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <button class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold transition-colors" id="confirmCheckoutBtn">
+                                    <i class="fas fa-lock mr-2"></i>
+                                    Place Order
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.insertAdjacentHTML('beforeend', modalHTML);
+                
+                // Handle checkout confirmation
+                document.getElementById('confirmCheckoutBtn').addEventListener('click', () => {
+                    const name = document.getElementById('checkoutName').value;
+                    const phone = document.getElementById('checkoutPhone').value;
+                    const address1 = document.getElementById('checkoutAddress1').value;
+                    const city = document.getElementById('checkoutCity').value;
+                    const pincode = document.getElementById('checkoutPincode').value;
+                    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+                    
+                    if (!name || !phone || !address1 || !city || !pincode) {
+                        this.showNotification('Please fill all required fields', 'error');
+                        return;
+                    }
+                    
+                    const shippingAddress = `${name}, ${address1}, ${city} - ${pincode}`;
+                    
+                    // Create order
+                    const newOrder = orderManager.createOrder(cart, shippingAddress, paymentMethod);
+                    
+                    // Clear cart
+                    cartManager.clearCart();
+                    
+                    // Close modal
+                    document.getElementById('checkoutModal').remove();
+                    
+                    // Show success message
+                    this.showNotification(`Order placed successfully! Order #${newOrder.orderNumber}`, 'success');
+                    
+                    // Switch to orders tab
+                    setTimeout(() => {
+                        document.querySelector('.medicines-tab[data-tab="orders"]').click();
+                        this.loadOrders();
+                    }, 1000);
+                });
+            },
+            
+            showUploadPrescriptionModal: function() {
+                const modalHTML = `
+                    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" id="uploadPrescriptionModal">
+                        <div class="bg-white rounded-2xl p-8 max-w-md w-full">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="text-xl font-bold text-gray-800">Upload Prescription</h3>
+                                <button class="text-gray-400 hover:text-gray-600" onclick="document.getElementById('uploadPrescriptionModal').remove()">
+                                    <i class="fas fa-times text-xl"></i>
+                                </button>
+                            </div>
+                            
+                            <div class="space-y-6">
+                                <div class="border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center">
+                                    <i class="fas fa-file-upload text-4xl text-gray-400 mb-4"></i>
+                                    <p class="text-gray-600 mb-2">Drop your prescription here or click to browse</p>
+                                    <p class="text-sm text-gray-500">Supports JPG, PNG, PDF up to 10MB</p>
+                                    <input type="file" class="hidden" id="prescriptionFileInput" accept=".jpg,.jpeg,.png,.pdf">
+                                    <button class="mt-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors" onclick="document.getElementById('prescriptionFileInput').click()">
+                                        Browse Files
+                                    </button>
+                                </div>
+                                
+                                <div class="grid grid-cols-2 gap-4">
+                                    <input type="text" placeholder="Doctor's Name" class="border border-gray-300 rounded-lg p-3" id="doctorName">
+                                    <input type="date" class="border border-gray-300 rounded-lg p-3" id="prescriptionDate">
+                                </div>
+                                
+                                <button class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold transition-colors" id="uploadPrescriptionSubmitBtn">
+                                    <i class="fas fa-upload mr-2"></i>
+                                    Upload Prescription
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.insertAdjacentHTML('beforeend', modalHTML);
+                
+                // Handle file selection
+                document.getElementById('prescriptionFileInput').addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        this.showNotification(`Selected: ${file.name}`, 'info');
+                    }
+                });
+                
+                // Handle upload
+                document.getElementById('uploadPrescriptionSubmitBtn').addEventListener('click', () => {
+                    const doctorName = document.getElementById('doctorName').value;
+                    const prescriptionDate = document.getElementById('prescriptionDate').value;
+                    const fileInput = document.getElementById('prescriptionFileInput');
+                    
+                    if (!fileInput.files[0]) {
+                        this.showNotification('Please select a prescription file', 'error');
+                        return;
+                    }
+                    
+                    if (!doctorName) {
+                        this.showNotification('Please enter doctor\'s name', 'error');
+                        return;
+                    }
+                    
+                    // Simulate upload
+                    setTimeout(() => {
+                        this.showNotification('Prescription uploaded successfully! Our team will verify it soon.', 'success');
+                        document.getElementById('uploadPrescriptionModal').remove();
+                        
+                        // In a real app, you would save the prescription to the database
+                    }, 2000);
+                });
+            },
+            
+            showFilterModal: function() {
+                const modalHTML = `
+                    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" id="filterModal">
+                        <div class="bg-white rounded-2xl p-8 max-w-md w-full">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="text-xl font-bold text-gray-800">Filter Medicines</h3>
+                                <button class="text-gray-400 hover:text-gray-600" onclick="document.getElementById('filterModal').remove()">
+                                    <i class="fas fa-times text-xl"></i>
+                                </button>
+                            </div>
+                            
+                            <div class="space-y-6">
+                                <!-- Availability -->
+                                <div>
+                                    <h4 class="font-semibold text-gray-800 mb-3">Availability</h4>
+                                    <div class="space-y-2">
+                                        <label class="flex items-center">
+                                            <input type="checkbox" class="mr-3" checked>
+                                            <span>In Stock</span>
+                                        </label>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" class="mr-3">
+                                            <span>Out of Stock</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <!-- Price Range -->
+                                <div>
+                                    <h4 class="font-semibold text-gray-800 mb-3">Price Range</h4>
+                                    <div class="flex items-center space-x-4">
+                                        <input type="number" placeholder="Min" class="border border-gray-300 rounded-lg p-2 w-24" value="0">
+                                        <span class="text-gray-400">to</span>
+                                        <input type="number" placeholder="Max" class="border border-gray-300 rounded-lg p-2 w-24" value="1000">
+                                    </div>
+                                </div>
+                                
+                                <!-- Discount -->
+                                <div>
+                                    <h4 class="font-semibold text-gray-800 mb-3">Discount</h4>
+                                    <div class="space-y-2">
+                                        <label class="flex items-center">
+                                            <input type="checkbox" class="mr-3">
+                                            <span>10% and above</span>
+                                        </label>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" class="mr-3">
+                                            <span>20% and above</span>
+                                        </label>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" class="mr-3">
+                                            <span>30% and above</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <button class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold transition-colors" onclick="document.getElementById('filterModal').remove(); medicineUIController.showNotification('Filters applied', 'success')">
+                                    Apply Filters
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.insertAdjacentHTML('beforeend', modalHTML);
+            },
+            
+            showSortModal: function() {
+                const modalHTML = `
+                    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" id="sortModal">
+                        <div class="bg-white rounded-2xl p-8 max-w-md w-full">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="text-xl font-bold text-gray-800">Sort By</h3>
+                                <button class="text-gray-400 hover:text-gray-600" onclick="document.getElementById('sortModal').remove()">
+                                    <i class="fas fa-times text-xl"></i>
+                                </button>
+                            </div>
+                            
+                            <div class="space-y-2">
+                                <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer">
+                                    <input type="radio" name="sortOption" value="relevance" class="mr-3" checked>
+                                    <span>Relevance</span>
+                                </label>
+                                <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer">
+                                    <input type="radio" name="sortOption" value="price-low-high" class="mr-3">
+                                    <span>Price: Low to High</span>
+                                </label>
+                                <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer">
+                                    <input type="radio" name="sortOption" value="price-high-low" class="mr-3">
+                                    <span>Price: High to Low</span>
+                                </label>
+                                <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer">
+                                    <input type="radio" name="sortOption" value="discount" class="mr-3">
+                                    <span>Discount</span>
+                                </label>
+                                <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer">
+                                    <input type="radio" name="sortOption" value="popularity" class="mr-3">
+                                    <span>Popularity</span>
+                                </label>
+                            </div>
+                            
+                            <button class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold transition-colors mt-6" onclick="document.getElementById('sortModal').remove(); medicineUIController.showNotification('Sorting applied', 'success')">
+                                Apply Sort
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.insertAdjacentHTML('beforeend', modalHTML);
+            },
+            
+            showNotification: function(message, type = 'info') {
+                const bgColor = {
+                    'success': 'bg-green-500',
+                    'error': 'bg-red-500',
+                    'warning': 'bg-yellow-500',
+                    'info': 'bg-blue-500'
+                }[type];
+                
+                const icon = {
+                    'success': 'fa-check-circle',
+                    'error': 'fa-exclamation-circle',
+                    'warning': 'fa-exclamation-triangle',
+                    'info': 'fa-info-circle'
+                }[type];
+                
+                const notification = document.createElement('div');
+                notification.className = `fixed top-4 right-4 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50`;
+                notification.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <i class="fas ${icon}"></i>
+                        <span>${message}</span>
+                    </div>
+                `;
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.classList.remove('translate-x-full');
+                }, 100);
+                
+                setTimeout(() => {
+                    notification.classList.add('translate-x-full');
+                    setTimeout(() => {
+                        document.body.removeChild(notification);
+                    }, 300);
+                }, 3000);
+            },
+            
+            showEmergencyNotification: function(message) {
+                const notification = document.createElement('div');
+                notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-4 rounded-lg shadow-lg z-1002 animate-pulse';
+                notification.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-ambulance text-xl"></i>
+                        <div>
+                            <h4 class="font-bold">EMERGENCY ALERT</h4>
+                            <p class="text-sm">${message}</p>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.remove();
+                }, 5000);
+            }
+        };
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            medicineUIController.init();
+            
+            // Add staggered animation delays
+            const animateElements = document.querySelectorAll('.animate-scale-in, .animate-slide-in');
+            animateElements.forEach((el, index) => {
+                el.style.animationDelay = `${index * 0.1}s`;
+            });
+        });
+    </script>
+</body>
+</html>

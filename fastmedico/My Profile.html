@@ -1,0 +1,1933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FastMedico - My Profile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2563eb',
+                        'primary-dark': '#1d4ed8',
+                        secondary: '#10b981',
+                        accent: '#8b5cf6',
+                    },
+                    animation: {
+                        'slide-in': 'slideIn 0.6s ease-out',
+                        'fade-in': 'fadeIn 0.8s ease-out',
+                        'scale-in': 'scaleIn 0.5s ease-out',
+                        'pulse-gentle': 'pulseGentle 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        slideIn: {
+                            '0%': { opacity: '0', transform: 'translateX(-20px)' },
+                            '100%': { opacity: '1', transform: 'translateX(0)' }
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' }
+                        },
+                        scaleIn: {
+                            '0%': { opacity: '0', transform: 'scale(0.9)' },
+                            '100%': { opacity: '1', transform: 'scale(1)' }
+                        },
+                        pulseGentle: {
+                            '0%, 100%': { opacity: '1' },
+                            '50%': { opacity: '0.8' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+        }
+        
+        .sidebar {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        }
+        
+        .nav-item {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+        
+        .nav-item.active {
+            background: rgba(37, 99, 235, 0.2);
+            border-left: 4px solid #2563eb;
+        }
+        
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .quick-action {
+            transition: all 0.3s ease;
+        }
+        
+        .quick-action:hover {
+            transform: scale(1.05);
+        }
+        
+        .sos-pulse {
+            animation: sosPulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes sosPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+        }
+        
+        .notification-badge {
+            animation: bounce 2s ease-in-out infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        .profile-tab {
+            transition: all 0.3s ease;
+        }
+        
+        .profile-tab.active {
+            background: #2563eb;
+            color: white;
+        }
+        
+        .profile-section {
+            transition: all 0.3s ease;
+        }
+        
+        .profile-section:hover {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .health-metric {
+            transition: all 0.3s ease;
+        }
+        
+        .health-metric:hover {
+            transform: scale(1.03);
+        }
+        
+        .avatar-upload {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+        
+        .avatar-upload input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        
+        .emergency-btn-fixed {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #dc2626, #ef4444);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            animation: emergencyPulse 2s infinite;
+        }
+
+        .emergency-btn-fixed:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 35px rgba(220, 38, 38, 0.6);
+        }
+
+        .emergency-btn-fixed i {
+            font-size: 20px;
+            margin-bottom: 2px;
+        }
+
+        .emergency-btn-fixed.alerting {
+            animation: emergencyAlert 0.5s infinite alternate;
+            background: linear-gradient(135deg, #991b1b, #dc2626);
+        }
+
+        @keyframes emergencyPulse {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
+            }
+            50% { 
+                transform: scale(1.05);
+                box-shadow: 0 8px 30px rgba(220, 38, 38, 0.6);
+            }
+        }
+
+        @keyframes emergencyAlert {
+            0% { 
+                background: linear-gradient(135deg, #dc2626, #ef4444);
+                transform: scale(1);
+            }
+            100% { 
+                background: linear-gradient(135deg, #991b1b, #dc2626);
+                transform: scale(1.1);
+            }
+        }
+
+        /* Emergency Modal */
+        .emergency-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1001;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .emergency-modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #10b981;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1002;
+            transition: transform 0.3s ease;
+        }
+        
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+        
+        .toast.error {
+            background: #ef4444;
+        }
+        
+        /* Form validation */
+        .form-error {
+            color: #ef4444;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+        
+        .form-error.show {
+            display: block;
+        }
+        
+        input.error, select.error, textarea.error {
+            border-color: #ef4444;
+        }
+        
+        /* Toggle switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #d1d5db;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: #10b981;
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(24px);
+        }
+        
+        /* Update timestamp styles */
+        .update-timestamp {
+            font-size: 0.75rem;
+            color: #6b7280;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex">
+    <!-- Toast Notification -->
+    <div class="toast" id="toastNotification">
+        <span id="toastMessage">Changes saved successfully!</span>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar w-64 min-h-screen text-white p-6 flex flex-col">
+        <!-- Logo -->
+        <div class="flex items-center space-x-3 mb-8 animate-slide-in">
+            <i class="fas fa-heartbeat text-2xl text-primary"></i>
+            <h1 class="text-xl font-bold">Fast<span class="text-primary">Medico</span></h1>
+        </div>
+
+        <!-- User Profile -->
+        <div class="flex items-center space-x-3 mb-8 p-4 bg-white/10 rounded-xl animate-scale-in">
+            <div class="w-12 h-12 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center">
+                <span class="text-white font-semibold" id="sidebarInitials">JS</span>
+            </div>
+            <div>
+                <h3 class="font-semibold" id="sidebarName">John Smith</h3>
+                <p class="text-sm text-gray-300">Patient ID: PM123456</p>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="space-y-2 flex-1">
+            <a href="Dashboard.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-home w-5"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="My Profile.html" class="nav-item active flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-user-circle w-5"></i>
+                <span>My Profile</span>
+            </a>
+            <a href="hospitals.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-hospital w-5"></i>
+                <span>Hospitals</span>
+            </a>
+            <a href="Appointments.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-calendar-check w-5"></i>
+                <span>Appointments</span>
+            </a>
+            <a href="Prescriptions.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-prescription w-5"></i>
+                <span>Prescriptions</span>
+            </a>
+            <a href="Medical Records.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-file-medical w-5"></i>
+                <span>Medical Records</span>
+            </a>
+            <a href="Ambulance Services.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-ambulance w-5"></i>
+                <span>Ambulance</span>
+            </a>
+            <a href="Medicines.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-pills w-5"></i>
+                <span>Medicines</span>
+            </a>
+            <a href="Doctors.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-user-md w-5"></i>
+                <span>Doctors</span>
+            </a>
+            <a href="Blood Bank.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-tint w-5"></i>
+                <span>Blood Bank</span>
+            </a>
+            <a href="video consult.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-video w-5"></i>
+                <span>Video Consult</span>
+            </a>
+            <a href="Ai Diagnosis.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg">
+                <i class="fas fa-robot w-5"></i>
+                <span>AI Diagnosis</span>
+            </a>
+        </nav>
+
+        <!-- Emergency SOS Button -->
+        <div class="mt-auto">
+            <button class="w-full bg-red-500 hover:bg-red-600 text-white py-4 rounded-xl font-bold transition-all duration-300 sos-pulse" id="sidebarEmergencyBtn">
+                <i class="fas fa-phone-alt mr-2"></i>
+                EMERGENCY SOS
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 p-8 overflow-auto">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800 animate-slide-in">My Profile</h1>
+                <p class="text-gray-600 animate-slide-in" style="animation-delay: 0.1s">Manage your personal and health information</p>
+                <p class="text-sm text-gray-500 mt-1" id="lastUpdateText">Last updated: Loading...</p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <!-- Notifications -->
+                <div class="relative">
+                    <i class="fas fa-bell text-2xl text-gray-600 cursor-pointer hover:text-primary transition-colors" id="notificationIcon"></i>
+                    <span class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full notification-badge" id="notificationBadge"></span>
+                </div>
+                
+                <!-- User Avatar -->
+                <div class="w-10 h-10 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center text-white font-semibold cursor-pointer hover:scale-110 transition-transform" id="headerAvatar">
+                    JS
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Tabs -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 mb-8">
+            <div class="flex border-b border-gray-200 overflow-x-auto">
+                <button class="profile-tab active flex-1 py-4 px-6 text-center font-semibold rounded-tl-2xl whitespace-nowrap" data-tab="personal">
+                    <i class="fas fa-user mr-2"></i>Personal Info
+                </button>
+                <button class="profile-tab flex-1 py-4 px-6 text-center font-semibold whitespace-nowrap" data-tab="health">
+                    <i class="fas fa-heartbeat mr-2"></i>Health Profile
+                </button>
+                <button class="profile-tab flex-1 py-4 px-6 text-center font-semibold whitespace-nowrap" data-tab="emergency">
+                    <i class="fas fa-address-book mr-2"></i>Emergency Contacts
+                </button>
+                <button class="profile-tab flex-1 py-4 px-6 text-center font-semibold rounded-tr-2xl whitespace-nowrap" data-tab="settings">
+                    <i class="fas fa-cog mr-2"></i>Settings
+                </button>
+            </div>
+            
+            <!-- Tab Content -->
+            <div class="p-6">
+                <!-- Personal Info Tab -->
+                <div id="personal-tab" class="tab-content active">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <!-- Profile Picture & Basic Info -->
+                        <div class="lg:col-span-1">
+                            <div class="bg-white border border-gray-200 rounded-2xl p-6 profile-section">
+                                <div class="flex flex-col items-center">
+                                    <div class="relative mb-4">
+                                        <div class="w-32 h-32 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center text-white text-4xl font-bold mb-4" id="profileAvatar">
+                                            JS
+                                        </div>
+                                        <div class="avatar-upload absolute bottom-2 right-2">
+                                            <button class="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white hover:bg-primary-dark transition-colors" id="avatarUploadBtn">
+                                                <i class="fas fa-camera"></i>
+                                            </button>
+                                            <input type="file" id="avatar-upload" accept="image/*">
+                                        </div>
+                                    </div>
+                                    <h2 class="text-xl font-bold text-gray-800" id="profileName">John Smith</h2>
+                                    <p class="text-gray-600 mb-2">Patient ID: PM123456</p>
+                                    <div class="flex items-center text-sm text-gray-500 mb-4">
+                                        <i class="fas fa-map-marker-alt mr-1"></i>
+                                        <span id="profileLocation">New York, USA</span>
+                                    </div>
+                                    <div class="flex space-x-2">
+                                        <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors" id="editProfileBtn">
+                                            <i class="fas fa-edit mr-2"></i>Edit Profile
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-6 pt-6 border-t border-gray-200">
+                                    <h3 class="font-semibold text-gray-800 mb-3">Account Status</h3>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-gray-600">Email Verified</span>
+                                        <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-semibold">Verified</span>
+                                    </div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-gray-600">Phone Verified</span>
+                                        <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-semibold">Verified</span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-gray-600">Member Since</span>
+                                        <span class="font-semibold">Jan 2022</span>
+                                    </div>
+                                    <div class="flex items-center justify-between mt-2">
+                                        <span class="text-gray-600">Last Updated</span>
+                                        <span class="font-semibold text-sm update-timestamp" id="personalLastUpdate">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Personal Details Form -->
+                        <div class="lg:col-span-2">
+                            <div class="bg-white border border-gray-200 rounded-2xl p-6 profile-section">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h3 class="font-bold text-gray-800">Personal Information</h3>
+                                    <span class="text-sm text-gray-500 update-timestamp">Last updated: <span id="personalFormLastUpdate">-</span></span>
+                                </div>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                                        <input type="text" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="firstName" value="John">
+                                        <div class="form-error" id="firstNameError">First name is required</div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                                        <input type="text" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="lastName" value="Smith">
+                                        <div class="form-error" id="lastNameError">Last name is required</div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Date of Birth</label>
+                                        <input type="date" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="dob" value="1985-06-15">
+                                        <div class="form-error" id="dobError">Date of birth is required</div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Gender</label>
+                                        <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="gender">
+                                            <option value="male" selected>Male</option>
+                                            <option value="female">Female</option>
+                                            <option value="other">Other</option>
+                                            <option value="prefer-not-to-say">Prefer not to say</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <h3 class="font-bold text-gray-800 mb-4 mt-6">Contact Information</h3>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                                        <input type="email" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="email" value="john.smith@example.com">
+                                        <div class="form-error" id="emailError">Valid email is required</div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                                        <input type="tel" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="phone" value="+1 (555) 123-4567">
+                                        <div class="form-error" id="phoneError">Phone number is required</div>
+                                    </div>
+                                    <div class="md:col-span-2">
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Address</label>
+                                        <input type="text" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="address" value="123 Main Street, Apt 4B">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">City</label>
+                                        <input type="text" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="city" value="New York">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">ZIP Code</label>
+                                        <input type="text" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="zipCode" value="10001">
+                                    </div>
+                                </div>
+                                
+                                <div class="flex justify-end">
+                                    <button class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors" id="savePersonalInfo">
+                                        <i class="fas fa-save mr-2"></i>Save Changes
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Health Profile Tab -->
+                <div id="health-tab" class="tab-content hidden">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <!-- Health Metrics -->
+                        <div class="lg:col-span-2">
+                            <div class="bg-white border border-gray-200 rounded-2xl p-6 profile-section">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h3 class="font-bold text-gray-800">Health Metrics</h3>
+                                    <span class="text-sm text-gray-500 update-timestamp">Last updated: <span id="healthMetricsLastUpdate">-</span></span>
+                                </div>
+                                
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                                    <div class="health-metric bg-blue-50 p-4 rounded-xl text-center">
+                                        <div class="text-2xl font-bold text-blue-600" id="heartRate">72</div>
+                                        <div class="text-sm text-blue-800">Heart Rate</div>
+                                        <div class="text-xs text-blue-600 mt-1">bpm</div>
+                                    </div>
+                                    <div class="health-metric bg-green-50 p-4 rounded-xl text-center">
+                                        <div class="text-2xl font-bold text-green-600" id="bloodPressure">120/80</div>
+                                        <div class="text-sm text-green-800">Blood Pressure</div>
+                                        <div class="text-xs text-green-600 mt-1">mmHg</div>
+                                    </div>
+                                    <div class="health-metric bg-purple-50 p-4 rounded-xl text-center">
+                                        <div class="text-2xl font-bold text-purple-600" id="temperature">98.6</div>
+                                        <div class="text-sm text-purple-800">Temperature</div>
+                                        <div class="text-xs text-purple-600 mt-1">°F</div>
+                                    </div>
+                                    <div class="health-metric bg-orange-50 p-4 rounded-xl text-center">
+                                        <div class="text-2xl font-bold text-orange-600" id="oxygen">98%</div>
+                                        <div class="text-sm text-orange-800">Oxygen</div>
+                                        <div class="text-xs text-orange-600 mt-1">SpO2</div>
+                                    </div>
+                                </div>
+                                
+                                <h3 class="font-bold text-gray-800 mb-4">Medical Information</h3>
+                                
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Blood Type</label>
+                                        <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="bloodType">
+                                            <option value="O+" selected>O+</option>
+                                            <option value="O-">O-</option>
+                                            <option value="A+">A+</option>
+                                            <option value="A-">A-</option>
+                                            <option value="B+">B+</option>
+                                            <option value="B-">B-</option>
+                                            <option value="AB+">AB+</option>
+                                            <option value="AB-">AB-</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Allergies</label>
+                                        <textarea class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="allergies" rows="2" placeholder="List any allergies">Penicillin, Peanuts</textarea>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Current Medications</label>
+                                        <textarea class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="medications" rows="3" placeholder="List current medications">Lisinopril 10mg daily, Atorvastatin 20mg daily</textarea>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Medical Conditions</label>
+                                        <textarea class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="conditions" rows="3" placeholder="List any medical conditions">Hypertension, High Cholesterol</textarea>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Emergency Notes</label>
+                                        <textarea class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="emergencyNotes" rows="2" placeholder="Any important information for emergencies">No known drug allergies aside from listed</textarea>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex justify-end mt-6">
+                                    <button class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors" id="saveHealthInfo">
+                                        <i class="fas fa-save mr-2"></i>Save Health Info
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Health History & Insurance -->
+                        <div class="lg:col-span-1">
+                            <div class="bg-white border border-gray-200 rounded-2xl p-6 profile-section mb-6">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h3 class="font-bold text-gray-800">Insurance Information</h3>
+                                    <span class="text-sm text-gray-500 update-timestamp">Last updated: <span id="insuranceLastUpdate">-</span></span>
+                                </div>
+                                
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Insurance Provider</label>
+                                        <input type="text" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="insuranceProvider" value="Blue Cross Blue Shield">
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Policy Number</label>
+                                        <input type="text" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="policyNumber" value="BCBS-87452963">
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Group Number</label>
+                                        <input type="text" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="groupNumber" value="GRP-5521">
+                                    </div>
+                                </div>
+                                
+                                <div class="flex justify-end mt-4">
+                                    <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors" id="saveInsuranceInfo">
+                                        <i class="fas fa-save mr-2"></i>Save
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white border border-gray-200 rounded-2xl p-6 profile-section">
+                                <h3 class="font-bold text-gray-800 mb-4">Recent Health Events</h3>
+                                
+                                <div class="space-y-4" id="healthEvents">
+                                    <div class="flex items-start space-x-3">
+                                        <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                                            <i class="fas fa-file-medical text-blue-600"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-semibold text-gray-800">Annual Checkup</h4>
+                                            <p class="text-sm text-gray-600">Dr. Sarah Wilson • Oct 15, 2023</p>
+                                            <p class="text-xs text-gray-500">All vitals normal, cholesterol improved</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex items-start space-x-3">
+                                        <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+                                            <i class="fas fa-prescription text-green-600"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-semibold text-gray-800">Prescription Renewal</h4>
+                                            <p class="text-sm text-gray-600">Dr. Michael Chen • Sep 28, 2023</p>
+                                            <p class="text-xs text-gray-500">Lisinopril refill for 90 days</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex items-start space-x-3">
+                                        <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                                            <i class="fas fa-vial text-purple-600"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-semibold text-gray-800">Blood Test</h4>
+                                            <p class="text-sm text-gray-600">LabCorp • Sep 10, 2023</p>
+                                            <p class="text-xs text-gray-500">Complete blood count, results normal</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <button class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-lg font-medium transition-colors mt-4" id="viewFullHistory">
+                                    <i class="fas fa-history mr-2"></i>View Full History
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Emergency Contacts Tab -->
+                <div id="emergency-tab" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">Emergency Contacts</h2>
+                        <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors" id="addContactBtn">
+                            <i class="fas fa-plus mr-2"></i>Add Contact
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="emergencyContactsList">
+                        <!-- Contacts will be loaded here -->
+                    </div>
+                    
+                    <div class="mt-8">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-gray-800">Emergency Settings</h3>
+                            <span class="text-sm text-gray-500 update-timestamp">Last updated: <span id="emergencySettingsLastUpdate">-</span></span>
+                        </div>
+                        <div class="bg-white border border-gray-200 rounded-2xl p-6 profile-section">
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <h4 class="font-semibold text-gray-800">Auto-notify emergency contacts</h4>
+                                    <p class="text-sm text-gray-600">Send automatic alerts to your emergency contacts when you use SOS</p>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="auto-notify" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="font-semibold text-gray-800">Share location with emergency contacts</h4>
+                                    <p class="text-sm text-gray-600">Allow contacts to see your location during emergencies</p>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="share-location" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="flex justify-end mt-4">
+                                <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors" id="saveEmergencySettings">
+                                    <i class="fas fa-save mr-2"></i>Save Settings
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Settings Tab -->
+                <div id="settings-tab" class="tab-content hidden">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- Account Settings -->
+                        <div class="bg-white border border-gray-200 rounded-2xl p-6 profile-section">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-bold text-gray-800">Account Settings</h3>
+                                <span class="text-sm text-gray-500 update-timestamp">Last updated: <span id="accountSettingsLastUpdate">-</span></span>
+                            </div>
+                            
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Change Password</label>
+                                    <input type="password" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="currentPassword" placeholder="Current password">
+                                    <div class="form-error" id="currentPasswordError">Current password is required</div>
+                                </div>
+                                
+                                <div>
+                                    <input type="password" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="newPassword" placeholder="New password">
+                                    <div class="form-error" id="newPasswordError">New password must be at least 8 characters</div>
+                                </div>
+                                
+                                <div>
+                                    <input type="password" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="confirmPassword" placeholder="Confirm new password">
+                                    <div class="form-error" id="confirmPasswordError">Passwords do not match</div>
+                                </div>
+                                
+                                <button class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold transition-colors" id="updatePassword">
+                                    <i class="fas fa-key mr-2"></i>Update Password
+                                </button>
+                            </div>
+                            
+                            <div class="mt-6 pt-6 border-t border-gray-200">
+                                <h4 class="font-semibold text-gray-800 mb-3">Two-Factor Authentication</h4>
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm text-gray-600">Add an extra layer of security to your account</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="two-factor">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Notification Settings -->
+                        <div class="bg-white border border-gray-200 rounded-2xl p-6 profile-section">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-bold text-gray-800">Notification Preferences</h3>
+                                <span class="text-sm text-gray-500 update-timestamp">Last updated: <span id="notificationSettingsLastUpdate">-</span></span>
+                            </div>
+                            
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h4 class="font-semibold text-gray-800">Appointment Reminders</h4>
+                                        <p class="text-sm text-gray-600">Get notified about upcoming appointments</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="appointment-reminders" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h4 class="font-semibold text-gray-800">Prescription Refills</h4>
+                                        <p class="text-sm text-gray-600">Receive alerts when prescriptions need refilling</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="prescription-refills" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h4 class="font-semibold text-gray-800">Health Tips</h4>
+                                        <p class="text-sm text-gray-600">Get personalized health tips and articles</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="health-tips" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h4 class="font-semibold text-gray-800">Promotional Emails</h4>
+                                        <p class="text-sm text-gray-600">Receive offers and updates from FastMedico</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="promotional-emails">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-end mt-4">
+                                <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors" id="saveNotificationSettings">
+                                    <i class="fas fa-save mr-2"></i>Save Preferences
+                                </button>
+                            </div>
+                            
+                            <div class="mt-6 pt-6 border-t border-gray-200">
+                                <h4 class="font-semibold text-gray-800 mb-3">Data & Privacy</h4>
+                                <div class="space-y-2">
+                                    <button class="w-full text-left text-blue-600 hover:text-blue-800 py-2" id="downloadData">
+                                        <i class="fas fa-download mr-2"></i>Download My Data
+                                    </button>
+                                    <button class="w-full text-left text-red-600 hover:text-red-800 py-2" id="deleteAccount">
+                                        <i class="fas fa-trash mr-2"></i>Delete My Account
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <button class="emergency-btn-fixed" id="globalEmergencyBtn" title="Emergency SOS">
+        <i class="fas fa-phone-alt"></i>
+        <span>SOS</span>
+    </button>
+
+    <!-- Emergency Modal -->
+    <div class="emergency-modal" id="emergencyModal">
+        <div class="emergency-modal-content">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Emergency SOS</h3>
+            <p class="text-gray-600 mb-6">Are you sure you want to trigger emergency alert? This will notify emergency services and your contacts.</p>
+            
+            <div class="flex space-x-3">
+                <button class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-3 rounded-lg font-semibold transition-colors" id="cancelEmergency">
+                    Cancel
+                </button>
+                <button class="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg font-semibold transition-colors" id="confirmEmergency">
+                    Confirm SOS
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Contact Modal -->
+    <div class="emergency-modal" id="addContactModal">
+        <div class="emergency-modal-content">
+            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-user-plus text-blue-600 text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Add Emergency Contact</h3>
+            
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                    <input type="text" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="contactName" placeholder="Enter full name">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                    <input type="tel" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="contactPhone" placeholder="Enter phone number">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                    <input type="email" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="contactEmail" placeholder="Enter email address">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Relationship</label>
+                    <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="contactRelationship">
+                        <option value="spouse">Spouse</option>
+                        <option value="parent">Parent</option>
+                        <option value="sibling">Sibling</option>
+                        <option value="child">Child</option>
+                        <option value="friend">Friend</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="isPrimary" class="mr-2">
+                    <label for="isPrimary" class="text-sm text-gray-700">Set as primary emergency contact</label>
+                </div>
+            </div>
+            
+            <div class="flex space-x-3">
+                <button class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-3 rounded-lg font-semibold transition-colors" id="cancelAddContact">
+                    Cancel
+                </button>
+                <button class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold transition-colors" id="saveContact">
+                    Save Contact
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Profile Data Management
+        const profileData = {
+            // Load data from localStorage or use defaults
+            load: function() {
+                const savedData = localStorage.getItem('fastMedicoProfile');
+                if (savedData) {
+                    return JSON.parse(savedData);
+                }
+                
+                // Default data with initial timestamps
+                const now = new Date().toISOString();
+                return {
+                    personal: {
+                        firstName: "John",
+                        lastName: "Smith",
+                        dob: "1985-06-15",
+                        gender: "male",
+                        email: "john.smith@example.com",
+                        phone: "+1 (555) 123-4567",
+                        address: "123 Main Street, Apt 4B",
+                        city: "New York",
+                        zipCode: "10001",
+                        lastUpdated: now
+                    },
+                    health: {
+                        heartRate: "72",
+                        bloodPressure: "120/80",
+                        temperature: "98.6",
+                        oxygen: "98%",
+                        bloodType: "O+",
+                        allergies: "Penicillin, Peanuts",
+                        medications: "Lisinopril 10mg daily, Atorvastatin 20mg daily",
+                        conditions: "Hypertension, High Cholesterol",
+                        emergencyNotes: "No known drug allergies aside from listed",
+                        insuranceProvider: "Blue Cross Blue Shield",
+                        policyNumber: "BCBS-87452963",
+                        groupNumber: "GRP-5521",
+                        lastUpdated: now
+                    },
+                    emergencyContacts: [
+                        {
+                            id: 1,
+                            name: "Sarah Johnson",
+                            phone: "+1 (555) 987-6543",
+                            email: "sarah.j@example.com",
+                            relationship: "spouse",
+                            isPrimary: true,
+                            lastUpdated: now
+                        },
+                        {
+                            id: 2,
+                            name: "Michael Smith",
+                            phone: "+1 (555) 456-7890",
+                            email: "michael.s@example.com",
+                            relationship: "sibling",
+                            isPrimary: false,
+                            lastUpdated: now
+                        }
+                    ],
+                    settings: {
+                        autoNotify: true,
+                        shareLocation: true,
+                        appointmentReminders: true,
+                        prescriptionRefills: true,
+                        healthTips: true,
+                        promotionalEmails: false,
+                        twoFactor: false,
+                        lastUpdated: now
+                    },
+                    lastProfileUpdate: now
+                };
+            },
+            
+            // Save data to localStorage
+            save: function(data) {
+                localStorage.setItem('fastMedicoProfile', JSON.stringify(data));
+            },
+            
+            // Update last updated timestamp
+            updateTimestamp: function(section) {
+                const data = this.load();
+                const now = new Date().toISOString();
+                
+                if (section) {
+                    data[section].lastUpdated = now;
+                }
+                
+                data.lastProfileUpdate = now;
+                this.save(data);
+                
+                return now;
+            },
+            
+            // Format date for display
+            formatDate: function(dateString) {
+                if (!dateString) return "Never";
+                
+                const date = new Date(dateString);
+                const now = new Date();
+                const diffMs = now - date;
+                const diffMins = Math.floor(diffMs / 60000);
+                const diffHours = Math.floor(diffMs / 3600000);
+                const diffDays = Math.floor(diffMs / 86400000);
+                
+                if (diffMins < 1) {
+                    return "Just now";
+                } else if (diffMins < 60) {
+                    return `${diffMins} minute${diffMins === 1 ? '' : 's'} ago`;
+                } else if (diffHours < 24) {
+                    return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
+                } else if (diffDays < 7) {
+                    return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
+                } else {
+                    return date.toLocaleDateString() + ' at ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                }
+            }
+        };
+
+        // UI Controller
+        const profileUIController = {
+            // Initialize the application
+            init: function() {
+                this.loadProfileData();
+                this.setupEventListeners();
+                this.setupTabs();
+                this.loadEmergencyContacts();
+                
+                // Add staggered animation delays
+                const animateElements = document.querySelectorAll('.animate-scale-in, .animate-slide-in');
+                animateElements.forEach((el, index) => {
+                    el.style.animationDelay = `${index * 0.1}s`;
+                });
+            },
+            
+            // Load profile data into UI
+            loadProfileData: function() {
+                const data = profileData.load();
+                
+                // Personal Info
+                document.getElementById('firstName').value = data.personal.firstName;
+                document.getElementById('lastName').value = data.personal.lastName;
+                document.getElementById('dob').value = data.personal.dob;
+                document.getElementById('gender').value = data.personal.gender;
+                document.getElementById('email').value = data.personal.email;
+                document.getElementById('phone').value = data.personal.phone;
+                document.getElementById('address').value = data.personal.address;
+                document.getElementById('city').value = data.personal.city;
+                document.getElementById('zipCode').value = data.personal.zipCode;
+                
+                // Update profile display
+                this.updateProfileDisplay();
+                
+                // Health Info
+                document.getElementById('heartRate').textContent = data.health.heartRate;
+                document.getElementById('bloodPressure').textContent = data.health.bloodPressure;
+                document.getElementById('temperature').textContent = data.health.temperature;
+                document.getElementById('oxygen').textContent = data.health.oxygen;
+                document.getElementById('bloodType').value = data.health.bloodType;
+                document.getElementById('allergies').value = data.health.allergies;
+                document.getElementById('medications').value = data.health.medications;
+                document.getElementById('conditions').value = data.health.conditions;
+                document.getElementById('emergencyNotes').value = data.health.emergencyNotes;
+                document.getElementById('insuranceProvider').value = data.health.insuranceProvider;
+                document.getElementById('policyNumber').value = data.health.policyNumber;
+                document.getElementById('groupNumber').value = data.health.groupNumber;
+                
+                // Settings
+                document.getElementById('auto-notify').checked = data.settings.autoNotify;
+                document.getElementById('share-location').checked = data.settings.shareLocation;
+                document.getElementById('appointment-reminders').checked = data.settings.appointmentReminders;
+                document.getElementById('prescription-refills').checked = data.settings.prescriptionRefills;
+                document.getElementById('health-tips').checked = data.settings.healthTips;
+                document.getElementById('promotional-emails').checked = data.settings.promotionalEmails;
+                document.getElementById('two-factor').checked = data.settings.twoFactor;
+                
+                // Update last updated timestamps
+                this.updateLastUpdatedTimestamps();
+            },
+            
+            // Update profile display elements
+             updateProfileDisplay: function() {
+                const data = profileData.load();
+                const firstName = data.personal.firstName;
+                const lastName = data.personal.lastName;
+                const fullName = `${firstName} ${lastName}`;
+                const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`;
+                const location = `${data.personal.city}, USA`;
+                
+                // Update all name displays
+                document.getElementById('sidebarName').textContent = fullName;
+                document.getElementById('profileName').textContent = fullName;
+                document.getElementById('sidebarInitials').textContent = initials;
+                document.getElementById('profileAvatar').textContent = initials;
+                document.getElementById('headerAvatar').textContent = initials;
+                document.getElementById('profileLocation').textContent = location;
+            },
+            
+            // Update last updated timestamps
+            updateLastUpdatedTimestamps: function() {
+                const data = profileData.load();
+                
+                // Main header
+                document.getElementById('lastUpdateText').textContent = `Last updated: ${profileData.formatDate(data.lastProfileUpdate)}`;
+                
+                // Personal info section
+                document.getElementById('personalLastUpdate').textContent = profileData.formatDate(data.personal.lastUpdated);
+                document.getElementById('personalFormLastUpdate').textContent = profileData.formatDate(data.personal.lastUpdated);
+                
+                // Health metrics
+                document.getElementById('healthMetricsLastUpdate').textContent = profileData.formatDate(data.health.lastUpdated);
+                document.getElementById('insuranceLastUpdate').textContent = profileData.formatDate(data.health.lastUpdated);
+                
+                // Settings
+                document.getElementById('emergencySettingsLastUpdate').textContent = profileData.formatDate(data.settings.lastUpdated);
+                document.getElementById('accountSettingsLastUpdate').textContent = profileData.formatDate(data.settings.lastUpdated);
+                document.getElementById('notificationSettingsLastUpdate').textContent = profileData.formatDate(data.settings.lastUpdated);
+            },
+            
+            // Setup tab switching
+            setupTabs: function() {
+                const tabs = document.querySelectorAll('.profile-tab');
+                const tabContents = document.querySelectorAll('.tab-content');
+                
+                tabs.forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        const targetTab = tab.getAttribute('data-tab');
+                        
+                        // Update active tab
+                        tabs.forEach(t => t.classList.remove('active'));
+                        tab.classList.add('active');
+                        
+                        // Show target tab content
+                        tabContents.forEach(content => {
+                            content.classList.remove('active');
+                            content.classList.add('hidden');
+                        });
+                        
+                        const targetContent = document.getElementById(`${targetTab}-tab`);
+                        targetContent.classList.remove('hidden');
+                        targetContent.classList.add('active');
+                    });
+                });
+            },
+            
+            // Setup event listeners
+            setupEventListeners: function() {
+                // Save personal info
+                document.getElementById('savePersonalInfo').addEventListener('click', () => {
+                    this.savePersonalInfo();
+                });
+                
+                // Save health info
+                document.getElementById('saveHealthInfo').addEventListener('click', () => {
+                    this.saveHealthInfo();
+                });
+                
+                // Save insurance info
+                document.getElementById('saveInsuranceInfo').addEventListener('click', () => {
+                    this.saveInsuranceInfo();
+                });
+                
+                // Save emergency settings
+                document.getElementById('saveEmergencySettings').addEventListener('click', () => {
+                    this.saveEmergencySettings();
+                });
+                
+                // Save notification settings
+                document.getElementById('saveNotificationSettings').addEventListener('click', () => {
+                    this.saveNotificationSettings();
+                });
+                
+                // Update password
+                document.getElementById('updatePassword').addEventListener('click', () => {
+                    this.updatePassword();
+                });
+                
+                // Add emergency contact
+                document.getElementById('addContactBtn').addEventListener('click', () => {
+                    this.showAddContactModal();
+                });
+                
+                // Avatar upload
+                document.getElementById('avatarUploadBtn').addEventListener('click', function(e) {
+                    e.preventDefault();
+                    document.getElementById('avatar-upload').click();
+                });
+                
+                document.getElementById('avatar-upload').addEventListener('change', function() {
+                    if (this.files && this.files[0]) {
+                        profileUIController.uploadAvatar(this.files[0]);
+                    }
+                });
+                
+                // Edit profile button
+                document.getElementById('editProfileBtn').addEventListener('click', () => {
+                    this.scrollToPersonalForm();
+                });
+                
+                // View full history
+                document.getElementById('viewFullHistory').addEventListener('click', () => {
+                    this.showFullHistory();
+                });
+                
+                // Download data
+                document.getElementById('downloadData').addEventListener('click', () => {
+                    this.downloadData();
+                });
+                
+                // Delete account
+                document.getElementById('deleteAccount').addEventListener('click', () => {
+                    this.deleteAccount();
+                });
+                
+                // Emergency button in sidebar
+                document.getElementById('sidebarEmergencyBtn').addEventListener('click', () => {
+                    document.getElementById('globalEmergencyBtn').click();
+                });
+                
+                // Setup emergency modal
+                this.setupEmergencyModal();
+                
+                // Setup add contact modal
+                this.setupAddContactModal();
+            },
+            
+            // Save personal information
+            savePersonalInfo: function() {
+                if (!this.validatePersonalForm()) return;
+                
+                const data = profileData.load();
+                
+                // Update personal data
+                data.personal.firstName = document.getElementById('firstName').value;
+                data.personal.lastName = document.getElementById('lastName').value;
+                data.personal.dob = document.getElementById('dob').value;
+                data.personal.gender = document.getElementById('gender').value;
+                data.personal.email = document.getElementById('email').value;
+                data.personal.phone = document.getElementById('phone').value;
+                data.personal.address = document.getElementById('address').value;
+                data.personal.city = document.getElementById('city').value;
+                data.personal.zipCode = document.getElementById('zipCode').value;
+                
+                // Update timestamp
+                profileData.updateTimestamp('personal');
+                
+                // Save data
+                profileData.save(data);
+                
+                // Update UI
+                this.updateProfileDisplay();
+                this.updateLastUpdatedTimestamps();
+                
+                // Show success message
+                this.showToast('Personal information updated successfully!');
+            },
+            
+            // Save health information
+            saveHealthInfo: function() {
+                const data = profileData.load();
+                
+                // Update health data
+                data.health.bloodType = document.getElementById('bloodType').value;
+                data.health.allergies = document.getElementById('allergies').value;
+                data.health.medications = document.getElementById('medications').value;
+                data.health.conditions = document.getElementById('conditions').value;
+                data.health.emergencyNotes = document.getElementById('emergencyNotes').value;
+                
+                // Update timestamp
+                profileData.updateTimestamp('health');
+                
+                // Save data
+                profileData.save(data);
+                
+                // Update UI
+                this.updateLastUpdatedTimestamps();
+                
+                // Show success message
+                this.showToast('Health information updated successfully!');
+            },
+            
+            // Save insurance information
+            saveInsuranceInfo: function() {
+                const data = profileData.load();
+                
+                // Update insurance data
+                data.health.insuranceProvider = document.getElementById('insuranceProvider').value;
+                data.health.policyNumber = document.getElementById('policyNumber').value;
+                data.health.groupNumber = document.getElementById('groupNumber').value;
+                
+                // Update timestamp (using health section)
+                profileData.updateTimestamp('health');
+                
+                // Save data
+                profileData.save(data);
+                
+                // Update UI
+                this.updateLastUpdatedTimestamps();
+                
+                // Show success message
+                this.showToast('Insurance information updated successfully!');
+            },
+            
+            // Save emergency settings
+            saveEmergencySettings: function() {
+                const data = profileData.load();
+                
+                // Update emergency settings
+                data.settings.autoNotify = document.getElementById('auto-notify').checked;
+                data.settings.shareLocation = document.getElementById('share-location').checked;
+                
+                // Update timestamp
+                profileData.updateTimestamp('settings');
+                
+                // Save data
+                profileData.save(data);
+                
+                // Update UI
+                this.updateLastUpdatedTimestamps();
+                
+                // Show success message
+                this.showToast('Emergency settings updated successfully!');
+            },
+            
+            // Save notification settings
+            saveNotificationSettings: function() {
+                const data = profileData.load();
+                
+                // Update notification settings
+                data.settings.appointmentReminders = document.getElementById('appointment-reminders').checked;
+                data.settings.prescriptionRefills = document.getElementById('prescription-refills').checked;
+                data.settings.healthTips = document.getElementById('health-tips').checked;
+                data.settings.promotionalEmails = document.getElementById('promotional-emails').checked;
+                
+                // Update timestamp
+                profileData.updateTimestamp('settings');
+                
+                // Save data
+                profileData.save(data);
+                
+                // Update UI
+                this.updateLastUpdatedTimestamps();
+                
+                // Show success message
+                this.showToast('Notification preferences updated successfully!');
+            },
+            
+            // Update password
+            updatePassword: function() {
+                const currentPassword = document.getElementById('currentPassword').value;
+                const newPassword = document.getElementById('newPassword').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                
+                // Simple validation
+                if (!currentPassword) {
+                    this.showFormError('currentPasswordError', 'Current password is required');
+                    return;
+                }
+                
+                if (newPassword.length < 8) {
+                    this.showFormError('newPasswordError', 'New password must be at least 8 characters');
+                    return;
+                }
+                
+                if (newPassword !== confirmPassword) {
+                    this.showFormError('confirmPasswordError', 'Passwords do not match');
+                    return;
+                }
+                
+                // In a real app, you would send this to a server
+                // For demo purposes, we'll just show a success message
+                
+                // Clear form
+                document.getElementById('currentPassword').value = '';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
+                
+                // Clear errors
+                this.hideFormErrors();
+                
+                // Show success message
+                this.showToast('Password updated successfully!');
+            },
+            
+            // Validate personal form
+            validatePersonalForm: function() {
+                let isValid = true;
+                
+                // First name
+                if (!document.getElementById('firstName').value.trim()) {
+                    this.showFormError('firstNameError', 'First name is required');
+                    isValid = false;
+                } else {
+                    this.hideFormError('firstNameError');
+                }
+                
+                // Last name
+                if (!document.getElementById('lastName').value.trim()) {
+                    this.showFormError('lastNameError', 'Last name is required');
+                    isValid = false;
+                } else {
+                    this.hideFormError('lastNameError');
+                }
+                
+                // Email
+                const email = document.getElementById('email').value;
+                if (!email || !this.isValidEmail(email)) {
+                    this.showFormError('emailError', 'Valid email is required');
+                    isValid = false;
+                } else {
+                    this.hideFormError('emailError');
+                }
+                
+                // Phone
+                if (!document.getElementById('phone').value.trim()) {
+                    this.showFormError('phoneError', 'Phone number is required');
+                    isValid = false;
+                } else {
+                    this.hideFormError('phoneError');
+                }
+                
+                return isValid;
+            },
+            
+            // Email validation
+            isValidEmail: function(email) {
+                const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return re.test(email);
+            },
+            
+            // Show form error
+            showFormError: function(errorId, message) {
+                const errorElement = document.getElementById(errorId);
+                errorElement.textContent = message;
+                errorElement.classList.add('show');
+                
+                // Also add error class to input
+                const inputId = errorId.replace('Error', '');
+                const inputElement = document.getElementById(inputId);
+                if (inputElement) {
+                    inputElement.classList.add('error');
+                }
+            },
+            
+            // Hide form error
+            hideFormError: function(errorId) {
+                const errorElement = document.getElementById(errorId);
+                errorElement.classList.remove('show');
+                
+                // Also remove error class from input
+                const inputId = errorId.replace('Error', '');
+                const inputElement = document.getElementById(inputId);
+                if (inputElement) {
+                    inputElement.classList.remove('error');
+                }
+            },
+            
+            // Hide all form errors
+            hideFormErrors: function() {
+                const errorElements = document.querySelectorAll('.form-error');
+                errorElements.forEach(element => {
+                    element.classList.remove('show');
+                });
+                
+                const inputElements = document.querySelectorAll('input, select, textarea');
+                inputElements.forEach(element => {
+                    element.classList.remove('error');
+                });
+            },
+            
+            // Load emergency contacts
+            loadEmergencyContacts: function() {
+                const data = profileData.load();
+                const contactsContainer = document.getElementById('emergencyContactsList');
+                contactsContainer.innerHTML = '';
+                
+                data.emergencyContacts.forEach(contact => {
+                    const contactHTML = `
+                        <div class="bg-white border border-gray-200 rounded-2xl p-6 profile-section">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="font-bold text-gray-800">${contact.name}</h3>
+                                <span class="${contact.isPrimary ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'} text-xs px-2 py-1 rounded-full font-semibold">
+                                    ${contact.isPrimary ? 'Primary' : 'Secondary'}
+                                </span>
+                            </div>
+                            
+                            <div class="space-y-3 mb-4">
+                                <div class="flex items-center text-gray-600">
+                                    <i class="fas fa-phone text-green-500 mr-2 w-5"></i>
+                                    <span>${contact.phone}</span>
+                                </div>
+                                <div class="flex items-center text-gray-600">
+                                    <i class="fas fa-envelope text-blue-500 mr-2 w-5"></i>
+                                    <span>${contact.email}</span>
+                                </div>
+                                <div class="flex items-center text-gray-600">
+                                    <i class="fas fa-user-friends text-purple-500 mr-2 w-5"></i>
+                                    <span>${this.formatRelationship(contact.relationship)}</span>
+                                </div>
+                                ${contact.lastUpdated ? `
+                                <div class="flex items-center text-gray-600 text-xs">
+                                    <i class="fas fa-clock text-gray-400 mr-2 w-5"></i>
+                                    <span>Updated ${profileData.formatDate(contact.lastUpdated)}</span>
+                                </div>
+                                ` : ''}
+                            </div>
+                            
+                            <div class="flex space-x-2">
+                                <button class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg font-medium transition-colors edit-contact" data-contact-id="${contact.id}">
+                                    <i class="fas fa-edit mr-2"></i>Edit
+                                </button>
+                                <button class="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg font-medium transition-colors delete-contact" data-contact-id="${contact.id}">
+                                    <i class="fas fa-trash mr-2"></i>Remove
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    contactsContainer.innerHTML += contactHTML;
+                });
+                
+                // Add event listeners to contact buttons
+                this.setupContactEventListeners();
+            },
+            
+            // Format relationship for display
+            formatRelationship: function(relationship) {
+                const relationships = {
+                    'spouse': 'Spouse',
+                    'parent': 'Parent',
+                    'sibling': 'Sibling',
+                    'child': 'Child',
+                    'friend': 'Friend',
+                    'other': 'Other'
+                };
+                
+                return relationships[relationship] || relationship;
+            },
+            
+            // Setup contact event listeners
+            setupContactEventListeners: function() {
+                // Edit contact buttons
+                document.querySelectorAll('.edit-contact').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const contactId = parseInt(e.target.closest('button').getAttribute('data-contact-id'));
+                        this.editContact(contactId);
+                    });
+                });
+                
+                // Delete contact buttons
+                document.querySelectorAll('.delete-contact').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const contactId = parseInt(e.target.closest('button').getAttribute('data-contact-id'));
+                        this.deleteContact(contactId);
+                    });
+                });
+            },
+            
+            // Show add contact modal
+            showAddContactModal: function() {
+                // Clear form
+                document.getElementById('contactName').value = '';
+                document.getElementById('contactPhone').value = '';
+                document.getElementById('contactEmail').value = '';
+                document.getElementById('contactRelationship').value = 'spouse';
+                document.getElementById('isPrimary').checked = false;
+                
+                // Show modal
+                document.getElementById('addContactModal').style.display = 'flex';
+            },
+            
+            // Setup add contact modal
+            setupAddContactModal: function() {
+                const modal = document.getElementById('addContactModal');
+                const cancelBtn = document.getElementById('cancelAddContact');
+                const saveBtn = document.getElementById('saveContact');
+                
+                // Cancel button
+                cancelBtn.addEventListener('click', () => {
+                    modal.style.display = 'none';
+                });
+                
+                // Save button
+                saveBtn.addEventListener('click', () => {
+                    this.saveNewContact();
+                });
+                
+                // Close modal when clicking outside
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.style.display = 'none';
+                    }
+                });
+            },
+            
+            // Save new contact
+            saveNewContact: function() {
+                const name = document.getElementById('contactName').value;
+                const phone = document.getElementById('contactPhone').value;
+                const email = document.getElementById('contactEmail').value;
+                const relationship = document.getElementById('contactRelationship').value;
+                const isPrimary = document.getElementById('isPrimary').checked;
+                
+                // Simple validation
+                if (!name || !phone) {
+                    this.showToast('Name and phone number are required', 'error');
+                    return;
+                }
+                
+                const data = profileData.load();
+                
+                // If setting as primary, remove primary status from other contacts
+                if (isPrimary) {
+                    data.emergencyContacts.forEach(contact => {
+                        contact.isPrimary = false;
+                    });
+                }
+                
+                // Create new contact
+                const newContact = {
+                    id: Date.now(), // Simple ID generation
+                    name: name,
+                    phone: phone,
+                    email: email,
+                    relationship: relationship,
+                    isPrimary: isPrimary,
+                    lastUpdated: new Date().toISOString()
+                };
+                
+                // Add to contacts
+                data.emergencyContacts.push(newContact);
+                
+                // Save data
+                profileData.save(data);
+                
+                // Reload contacts
+                this.loadEmergencyContacts();
+                
+                // Close modal
+                document.getElementById('addContactModal').style.display = 'none';
+                
+                // Show success message
+                this.showToast('Emergency contact added successfully!');
+            },
+            
+            // Edit contact
+            editContact: function(contactId) {
+                // For demo purposes, we'll just show a message
+                // In a real app, you would open an edit modal
+                this.showToast('Edit functionality would open here in a full application');
+            },
+            
+            // Delete contact
+            deleteContact: function(contactId) {
+                if (!confirm('Are you sure you want to remove this emergency contact?')) {
+                    return;
+                }
+                
+                const data = profileData.load();
+                
+                // Find contact index
+                const contactIndex = data.emergencyContacts.findIndex(contact => contact.id === contactId);
+                
+                if (contactIndex !== -1) {
+                    // Remove contact
+                    data.emergencyContacts.splice(contactIndex, 1);
+                    
+                    // Save data
+                    profileData.save(data);
+                    
+                    // Reload contacts
+                    this.loadEmergencyContacts();
+                    
+                    // Show success message
+                    this.showToast('Emergency contact removed successfully!');
+                }
+            },
+            
+            // Upload avatar
+            uploadAvatar: function(file) {
+                // In a real app, you would upload to a server
+                // For demo purposes, we'll just show a success message
+                
+                // Create a preview (in a real app, you would use this)
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // You could set this as the avatar background image
+                    // document.getElementById('profileAvatar').style.backgroundImage = `url(${e.target.result})`;
+                };
+                reader.readAsDataURL(file);
+                
+                // Show success message
+                this.showToast('Profile picture updated successfully!');
+            },
+            
+            // Scroll to personal form
+            scrollToPersonalForm: function() {
+                document.getElementById('personal-tab').scrollIntoView({ behavior: 'smooth' });
+            },
+            
+            // Show full history
+            showFullHistory: function() {
+                // In a real app, this would navigate to a full history page
+                this.showToast('This would open your full medical history in a real application');
+            },
+            
+            // Download data
+            downloadData: function() {
+                const data = profileData.load();
+                const dataStr = JSON.stringify(data, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                
+                // Create download link
+                const url = URL.createObjectURL(dataBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'fastmedico-profile-data.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                // Show success message
+                this.showToast('Your data has been downloaded!');
+            },
+            
+            // Delete account
+            deleteAccount: function() {
+                if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+                    // In a real app, you would send a request to the server
+                    // For demo purposes, we'll just show a message
+                    this.showToast('Account deletion request sent. You will receive a confirmation email.', 'error');
+                }
+            },
+            
+            // Setup emergency modal
+            setupEmergencyModal: function() {
+                const emergencyBtn = document.getElementById('globalEmergencyBtn');
+                const emergencyModal = document.getElementById('emergencyModal');
+                const confirmEmergency = document.getElementById('confirmEmergency');
+                const cancelEmergency = document.getElementById('cancelEmergency');
+
+                // Open emergency modal
+                emergencyBtn.addEventListener('click', function() {
+                    emergencyModal.style.display = 'flex';
+                });
+
+                // Confirm emergency
+                confirmEmergency.addEventListener('click', function() {
+                    profileUIController.triggerEmergencyAlert();
+                    emergencyModal.style.display = 'none';
+                });
+
+                // Cancel emergency
+                cancelEmergency.addEventListener('click', function() {
+                    emergencyModal.style.display = 'none';
+                });
+
+                // Close modal when clicking outside
+                emergencyModal.addEventListener('click', function(e) {
+                    if (e.target === emergencyModal) {
+                        emergencyModal.style.display = 'none';
+                    }
+                });
+            },
+            
+            // Trigger emergency alert
+            triggerEmergencyAlert: function() {
+                const btn = document.getElementById('globalEmergencyBtn');
+                const originalHTML = btn.innerHTML;
+                
+                // Visual feedback
+                btn.classList.add('alerting');
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>ALERTING...</span>';
+                
+                // Simulate emergency process
+                setTimeout(() => {
+                    this.showEmergencyNotification('Emergency services alerted! Help is on the way.');
+                    
+                    // Reset button after 5 seconds
+                    setTimeout(() => {
+                        btn.classList.remove('alerting');
+                        btn.innerHTML = originalHTML;
+                    }, 5000);
+                    
+                }, 3000);
+            },
+            
+            // Show emergency notification
+            showEmergencyNotification: function(message) {
+                // Create notification
+                const notification = document.createElement('div');
+                notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-4 rounded-lg shadow-lg z-1002 animate-pulse';
+                notification.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-ambulance text-xl"></i>
+                        <div>
+                            <h4 class="font-bold">EMERGENCY ALERT</h4>
+                            <p class="text-sm">${message}</p>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(notification);
+                
+                // Remove notification after 5 seconds
+                setTimeout(() => {
+                    notification.remove();
+                }, 5000);
+            },
+            
+            // Show toast notification
+            showToast: function(message, type = 'success') {
+                const toast = document.getElementById('toastNotification');
+                const toastMessage = document.getElementById('toastMessage');
+                
+                toastMessage.textContent = message;
+                
+                if (type === 'error') {
+                    toast.classList.add('error');
+                } else {
+                    toast.classList.remove('error');
+                }
+                
+                toast.classList.add('show');
+                
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            }
+        };
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            profileUIController.init();
+        });
+    </script>
+</body>
+</html>
